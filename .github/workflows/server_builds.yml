@@ -1,11 +1,6 @@
 name: ☁ Headless Builds
 on: [push, pull_request]
 
-# Global Cache Settings
-env:
-  GODOT_BASE_BRANCH: 3.x
-  SCONSFLAGS: platform=server verbose=yes warnings=all werror=yes debug_symbols=no --jobs=2
-
 
 jobs:
   mac-editor:
@@ -17,5 +12,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         
-      - name: Check if brew is installed
-        run: brew
+      - name: Install scons and yasm
+        run: brew install scons yasm
+
+      - name: Check if scons is installed correctly
+        run: scons --version
+
+      - name: Compile
+        run: scons platform=server tools=yes use_static_cpp=no -j 8
