@@ -17,31 +17,5 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         
-      # Use python 3.x release (works cross platform; best to keep self contained in it's own step)
-      - name: Set up Python 3.x
-        uses: actions/setup-python@v2
-        with:
-          # Semantic version range syntax or exact version of a Python version
-          python-version: '3.x'
-          # Optional - x64 or x86 architecture, defaults to x64
-          architecture: 'x64'
-
-      # Setup scons, print python version and scons version info, so if anything is broken it won't run the build.
-      - name: Configuring Python packages
-        run: |
-          python -c "import sys; print(sys.version)"
-          python -m pip install scons
-          python --version
-          scons --version
-
-      # We should always be explicit with our flags usage here since it's gonna be sure to always set those flags
-      - name: Compilation
-        run: |
-          scons platform=server target=release_debug tools=yes use_static_cpp=no
-          ls -l bin/
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ${{ github.job }}
-          path: bin/*
-          retention-days: 14
+      - name: Check if brew is installed
+        run: brew
