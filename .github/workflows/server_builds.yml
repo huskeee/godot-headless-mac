@@ -5,7 +5,7 @@ on: [push, pull_request]
 env:
   GODOT_BASE_BRANCH: 3.x
   SCONSFLAGS: platform=server verbose=yes warnings=all werror=yes debug_symbols=no --jobs=2
-  SCONS_CACHE_LIMIT: 4096
+
 
 jobs:
   mac-editor:
@@ -13,32 +13,7 @@ jobs:
     name: macOS Headless (target=release_debug, tools=yes)
 
     steps:
-      - uses: actions/checkout@v2
-
-      # Upload cache on completion and check it out now
-      - name: Load .scons_cache directory
-        id: macos-editor-cache
-        uses: actions/cache@v2
-        with:
-          path: ${{github.workspace}}/.scons_cache/
-          key: ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
-          restore-keys: |
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}
-
-      # Upload cache on completion and check it out now
-      - name: Load .scons_cache directory
-        id: mac-headless-cache
-        uses: actions/cache@v2
-        with:
-          path: ${{github.workspace}}/.scons_cache/
-          key: ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
-          restore-keys: |
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}
-
+      
       # Use python 3.x release (works cross platform; best to keep self contained in it's own step)
       - name: Set up Python 3.x
         uses: actions/setup-python@v2
@@ -58,8 +33,6 @@ jobs:
 
       # We should always be explicit with our flags usage here since it's gonna be sure to always set those flags
       - name: Compilation
-        env:
-          SCONS_CACHE: ${{github.workspace}}/.scons_cache/
         run: |
           scons platform=server target=release_debug tools=yes use_static_cpp=no
           ls -l bin/
