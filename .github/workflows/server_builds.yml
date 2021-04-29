@@ -15,4 +15,6 @@ jobs:
         uses: actions/checkout@v2
         
       - name: Test envvars
-        run: mkdir Godot_${GODOT_VERSION}
+        run: |
+          mkdir Godot_${GODOT_VERSION}
+          ls
