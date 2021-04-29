@@ -10,9 +10,9 @@ jobs:
     GODOT_VERSION: 3.3
     
     steps:
+      
       - name: Checkout
         uses: actions/checkout@v2
-      
+        
       - name: Test envvars
-        run: mkdir Godot-${GODOT_VERSION}
-
+        run: mkdir Godot_${GODOT_VERSION}
