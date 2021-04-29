@@ -14,7 +14,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         
-      - name: Test envvars
+      - name: Install scons and yasm
+        run: brew install scons yasm
+
+      - name: Check if scons is installed correctly
+        run: scons --version
+
+      - name: Compile
         run: |
-          mkdir Godot_${GODOT_VERSION}
-          ls
+          scons platform=server tools=yes use_static_cpp=no -j 8
+          mv ./bin/godot_server.osx.tools.64 ./bin/godot
+          ls -l ./bin
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Godot_v${GODOT_VERSION}-stable_mac_headless.64
+          path: ./bin/*
+
