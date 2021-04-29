@@ -6,9 +6,7 @@ jobs:
   mac-editor:
     runs-on: "macos-latest"
     name: macOS Headless (target=release_debug, tools=yes)
-    env:
-      GODOT_VERSION: 3.3
-      
+    
     steps:
       
       - name: Checkout
@@ -28,6 +26,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: Godot_v${GODOT_VERSION}-stable_mac_headless.64
+          name: Godot_v3.3-stable_mac_headless.64
           path: ./bin/*
 
