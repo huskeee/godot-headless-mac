@@ -6,9 +6,9 @@ jobs:
   mac-editor:
     runs-on: "macos-latest"
     name: macOS Headless (target=release_debug, tools=yes)
-  env:
-    GODOT_VERSION: 3.3
-    
+    env:
+      GODOT_VERSION: 3.3
+      
     steps:
       
       - name: Checkout
