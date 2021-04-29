@@ -10,7 +10,6 @@ jobs:
     GODOT_VERSION: 3.3
     
     steps:
-      
       - name: Test
         run: mkdir Godot-${GODOT_VERSION}
 
