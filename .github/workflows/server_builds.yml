@@ -1,6 +1,8 @@
 name: ☁ Headless Builds
 on: [push, pull_request]
 
+env:
+  VERSION: 3.3.3-stable
 
 jobs:
   mac-editor:
@@ -22,10 +24,15 @@ jobs:
         run: |
           scons platform=server tools=yes use_static_cpp=no -j 8
           mv ./bin/godot_server.osx.tools.64 ./bin/godot
-          ls -l ./bin
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
+          zip ./bin/godot.zip ./bin/godot
+      
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
         with:
-          name: Godot_v3.3-stable_mac_headless.64
-          path: ./bin/*
-
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./bin/godot.zip
+          asset_name: Godot_v${VERSION}_mac_headless.64
+          tag: ${VERSION}
+          overwrite: true
+          body: "Headless build of Godot ${VERSION} for macOS.
+See details about the release [here](https://github.com/godotengine/godot/releases/tag/${VERSION})."
