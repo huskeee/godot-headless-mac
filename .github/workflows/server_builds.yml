@@ -31,7 +31,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./bin/godot.zip
-          asset_name: Godot_v${{ env.VERSION }}_mac_headless.64
+          asset_name: Godot_v${{ env.VERSION }}_mac_headless.64.zip
           tag: ${{ env.VERSION }}
           overwrite: true
           body: "Headless build of Godot ${{ env.VERSION }} for macOS.
