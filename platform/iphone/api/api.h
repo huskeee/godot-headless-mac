@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  test_physics.h                                                       */
+/*  api.h                                                                */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,14 +28,15 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef TEST_PHYSICS_H
-#define TEST_PHYSICS_H
+#ifndef IPHONE_API_H
+#define IPHONE_API_H
 
-#include "core/os/main_loop.h"
-
-namespace TestPhysics {
-
-MainLoop *test();
-}
-
+#if defined(IPHONE_ENABLED)
+extern void godot_ios_plugins_initialize();
+extern void godot_ios_plugins_deinitialize();
 #endif
+
+void register_iphone_api();
+void unregister_iphone_api();
+
+#endif // IPHONE_API_H

@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  main.h                                                               */
+/*  api.cpp                                                              */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,35 +28,21 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef MAIN_H
-#define MAIN_H
+#include "api.h"
 
-#include "core/error_list.h"
-#include "core/os/thread.h"
-#include "core/typedefs.h"
+#if defined(IPHONE_ENABLED)
 
-class Main {
+void register_iphone_api() {
+	godot_ios_plugins_initialize();
+}
 
-	static void print_help(const char *p_binary);
-	static uint64_t last_ticks;
-	static uint32_t frames;
-	static uint32_t frame;
-	static bool force_redraw_requested;
-	static int iterating;
+void unregister_iphone_api() {
+	godot_ios_plugins_deinitialize();
+}
 
-public:
-	static bool is_project_manager();
+#else
 
-	static Error setup(const char *execpath, int argc, char *argv[], bool p_second_phase = true);
-	static Error setup2(Thread::ID p_main_tid_override = 0);
-	static bool start();
+void register_iphone_api() {}
+void unregister_iphone_api() {}
 
-	static bool iteration();
-	static void force_redraw();
-
-	static bool is_iterating();
-
-	static void cleanup(bool p_force = false);
-};
-
-#endif // MAIN_H
+#endif

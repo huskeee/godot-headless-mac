@@ -8,7 +8,7 @@
 # Sebastian Silva <sebastian@sugarlabs.org>, 2016.
 # Jose Luis Bossio <joseluisbossio@gmail.com>, 2018.
 # Reynaldo Cruz <rcruz60@gmail.com>, 2018.
-# Javier Ocampos <xavier.ocampos@gmail.com>, 2018, 2019, 2020.
+# Javier Ocampos <xavier.ocampos@gmail.com>, 2018, 2019, 2020, 2021.
 # Andrés S <andres.segovia.dev@gmail.com>, 2019.
 # Florencia Menéndez <mariaflormz2@gmail.com>, 2019.
 # roger <616steam@gmail.com>, 2019, 2020.
@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Godot Engine editor\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2021-03-31 03:53+0000\n"
+"PO-Revision-Date: 2021-07-29 02:33+0000\n"
 "Last-Translator: Lisandro Lorea <lisandrolorea@gmail.com>\n"
 "Language-Team: Spanish (Argentina) <https://hosted.weblate.org/projects/"
 "godot-engine/godot/es_AR/>\n"
@@ -30,7 +30,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.6-dev\n"
+"X-Generator: Weblate 4.7.2-dev\n"
 
 #: core/math/expression.cpp modules/gdscript/gdscript_functions.cpp
 #: modules/visual_script/visual_script_builtin_funcs.cpp
@@ -55,9 +55,7 @@ msgstr "Entrada inválida %i (no se transmitió) en la expresión"
 
 #: core/math/expression.cpp
 msgid "self can't be used because instance is null (not passed)"
-msgstr ""
-"self no puede ser usado ya que la instancia es nula (la referencia no fue "
-"pasada)"
+msgstr "\"self\" no puede ser usado porque la instancia es nula (no se asignó)"
 
 #: core/math/expression.cpp
 msgid "Invalid operands to operator %s, %s and %s."
@@ -424,12 +422,6 @@ msgid "Animation tracks can only point to AnimationPlayer nodes."
 msgstr "Las pistas de Animación solo pueden apuntar a nodos AnimationPlayer."
 
 #: editor/animation_track_editor.cpp
-msgid "An animation player can't animate itself, only other players."
-msgstr ""
-"Un reproductor de animación no puede animarse a sí mismo, solo a otros "
-"reproductores."
-
-#: editor/animation_track_editor.cpp
 msgid "Not possible to add a new track without a root"
 msgstr "No es posible agregar una nueva pista sin una raíz"
 
@@ -476,8 +468,9 @@ msgid "Anim Move Keys"
 msgstr "Mover Claves de Anim"
 
 #: editor/animation_track_editor.cpp
-msgid "Clipboard is empty"
-msgstr "El portapapeles está vacío"
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Clipboard is empty!"
+msgstr "El portapapeles está vacío!"
 
 #: editor/animation_track_editor.cpp
 msgid "Paste Tracks"
@@ -1135,6 +1128,10 @@ msgstr "Cambiar Valor del Diccionario"
 #: editor/editor_about.cpp
 msgid "Thanks from the Godot community!"
 msgstr "Gracias de parte de la comunidad Godot!"
+
+#: editor/editor_about.cpp editor/editor_node.cpp editor/project_manager.cpp
+msgid "Click to copy."
+msgstr "Click para copiar."
 
 #: editor/editor_about.cpp
 msgid "Godot Engine contributors"
@@ -2524,7 +2521,7 @@ msgid "Save changes to the following scene(s) before quitting?"
 msgstr "Guardar cambios a la(s) siguiente(s) escena(s) antes de salir?"
 
 #: editor/editor_node.cpp
-msgid "Save changes the following scene(s) before opening Project Manager?"
+msgid "Save changes to the following scene(s) before opening Project Manager?"
 msgstr ""
 "Guardar cambios a la(s) siguiente(s) escena(s) antes de abrir el Gestor de "
 "Proyectos?"
@@ -2565,11 +2562,13 @@ msgstr "No se pudo cargar el script de addon desde la ruta: '%s'."
 
 #: editor/editor_node.cpp
 msgid ""
-"Unable to load addon script from path: '%s' There seems to be an error in "
-"the code, please check the syntax."
+"Unable to load addon script from path: '%s'. This might be due to a code "
+"error in that script.\n"
+"Disabling the addon at '%s' to prevent further errors."
 msgstr ""
-"No se pudo cargar el script de addon desde la ruta: '%s' Parece haber un "
-"error en el código. Por favor, revisá la sintaxis."
+"No se pudo cargar el script de addon desde la ruta: '%s'. Puede ser por un "
+"error de código en dicho script.\n"
+"Desactivando el addon en '%s' para prevenir nuevos errores."
 
 #: editor/editor_node.cpp
 msgid ""
@@ -3015,6 +3014,10 @@ msgstr "Comunidad"
 #: editor/editor_node.cpp
 msgid "About"
 msgstr "Acerca de"
+
+#: editor/editor_node.cpp
+msgid "Support Godot Development"
+msgstr "Apoyar el desarrollo de Godot"
 
 #: editor/editor_node.cpp
 msgid "Play the project."
@@ -5233,11 +5236,11 @@ msgstr ""
 
 #: editor/plugins/baked_lightmap_editor_plugin.cpp
 msgid ""
-"No meshes to bake. Make sure they contain an UV2 channel and that the 'Bake "
-"Light' flag is on."
+"No meshes to bake. Make sure they contain an UV2 channel and that the 'Use "
+"In Baked Light' and 'Generate Lightmap' flags are on."
 msgstr ""
-"No hay meshes para hacer bake. Asegúrate que contienen un canal UV2 y que el "
-"flag 'Bake Light' esta activado."
+"No hay meshes para hacer bake. Asegurate que contienen un canal UV2 y que "
+"los flags 'Use In Baked Light' y 'Generate Lightmap' estén seteados."
 
 #: editor/plugins/baked_lightmap_editor_plugin.cpp
 msgid "Failed creating lightmap images, make sure path is writable."
@@ -5263,7 +5266,7 @@ msgstr ""
 msgid ""
 "Godot editor was built without ray tracing support, lightmaps can't be baked."
 msgstr ""
-"El editor de Godot se compiló sin soporte de ray tracing, los lightmaps no "
+"El editor de Godot se compiló sin soporte para ray tracing, los lightmaps no "
 "pueden ser bakeados."
 
 #: editor/plugins/baked_lightmap_editor_plugin.cpp
@@ -7377,6 +7380,28 @@ msgid "View Plane Transform."
 msgstr "Ver Transformación en Plano."
 
 #: editor/plugins/spatial_editor_plugin.cpp
+#: editor/plugins/texture_region_editor_plugin.cpp
+#: scene/resources/visual_shader.cpp
+msgid "None"
+msgstr "Ninguno"
+
+#: editor/plugins/spatial_editor_plugin.cpp
+#, fuzzy
+msgid "Rotate"
+msgstr "Estado"
+
+#. TRANSLATORS: This refers to the movement that changes the position of an object.
+#: editor/plugins/spatial_editor_plugin.cpp
+#, fuzzy
+msgid "Translate"
+msgstr "Trasladar:"
+
+#: editor/plugins/spatial_editor_plugin.cpp
+#, fuzzy
+msgid "Scale"
+msgstr "Escala:"
+
+#: editor/plugins/spatial_editor_plugin.cpp
 msgid "Scaling: "
 msgstr "Escalando: "
 
@@ -7592,6 +7617,8 @@ msgstr "Rotación de Vista Trabada"
 msgid ""
 "To zoom further, change the camera's clipping planes (View -> Settings...)"
 msgstr ""
+"Para alejar más, cambiá los planos de corte de la cámara (Vista -> "
+"Configuración...)"
 
 #: editor/plugins/spatial_editor_plugin.cpp
 msgid ""
@@ -8027,11 +8054,6 @@ msgstr "Asignar Margen"
 #: editor/plugins/texture_region_editor_plugin.cpp
 msgid "Snap Mode:"
 msgstr "Modo de Ajuste:"
-
-#: editor/plugins/texture_region_editor_plugin.cpp
-#: scene/resources/visual_shader.cpp
-msgid "None"
-msgstr "Ninguno"
 
 #: editor/plugins/texture_region_editor_plugin.cpp
 msgid "Pixel Snap"
@@ -10177,7 +10199,7 @@ msgstr "Botón de Mouse"
 
 #: editor/project_settings_editor.cpp
 msgid ""
-"Invalid action name. it cannot be empty nor contain '/', ':', '=', '\\' or "
+"Invalid action name. It cannot be empty nor contain '/', ':', '=', '\\' or "
 "'\"'"
 msgstr ""
 "Nombre de acción inválido. No puede estar vacío o contener '/', ':', '=', "
@@ -10992,6 +11014,9 @@ msgid ""
 "every time it updates.\n"
 "Switch back to the Local scene tree dock to improve performance."
 msgstr ""
+"Al seleccionar, el panel de árbol de escena remota causará saltos de "
+"framerate en el proyecto cada vez que se actualice.\n"
+"Volvé a seleccionar escena local para mejorar el rendimiento."
 
 #: editor/scene_tree_dock.cpp
 msgid "Local"
@@ -11602,6 +11627,11 @@ msgid "GridMap Paint"
 msgstr "Pintar GridMap"
 
 #: modules/gridmap/grid_map_editor_plugin.cpp
+#, fuzzy
+msgid "GridMap Selection"
+msgstr "Llenar Selección en GridMap"
+
+#: modules/gridmap/grid_map_editor_plugin.cpp
 msgid "Grid Map"
 msgstr "Mapa de Grilla"
 
@@ -11851,6 +11881,16 @@ msgid "Add Output Port"
 msgstr "Agregar Puerto de Salida"
 
 #: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Change Port Type"
+msgstr "Cambiar Tipo"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Change Port Name"
+msgstr "Cambiar nombre del puerto de entrada"
+
+#: modules/visual_script/visual_script_editor.cpp
 msgid "Override an existing built-in function."
 msgstr "Reemplazar(Override) una función integrada existente."
 
@@ -12026,10 +12066,6 @@ msgstr "Redimensionar Comentario"
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Can't copy the function node."
 msgstr "No se puede copiar el nodo de función."
-
-#: modules/visual_script/visual_script_editor.cpp
-msgid "Clipboard is empty!"
-msgstr "El portapapeles está vacío!"
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Paste VisualScript Nodes"
@@ -12246,9 +12282,25 @@ msgstr ""
 "Instalala desde el menú de Proyecto."
 
 #: platform/android/export/export.cpp
+msgid ""
+"Either Debug Keystore, Debug User AND Debug Password settings must be "
+"configured OR none of them."
+msgstr ""
+"Deben estar configurados o bien Debug Keystore, Debug User Y Debug Password "
+"o bien ninguno de ellos."
+
+#: platform/android/export/export.cpp
 msgid "Debug keystore not configured in the Editor Settings nor in the preset."
 msgstr ""
 "Keystore debug no configurada en Configuración del Editor ni en el preset."
+
+#: platform/android/export/export.cpp
+msgid ""
+"Either Release Keystore, Release User AND Release Password settings must be "
+"configured OR none of them."
+msgstr ""
+"Deben estar configurados o bien Release Keystore, Release User y Release "
+"Passoword o bien ninguno de ellos."
 
 #: platform/android/export/export.cpp
 msgid "Release keystore incorrectly configured in the export preset."
@@ -13231,6 +13283,14 @@ msgstr "Solo se pueden asignar variaciones en funciones de vértice."
 #: servers/visual/shader_language.cpp
 msgid "Constants cannot be modified."
 msgstr "Las constantes no pueden modificarse."
+
+#~ msgid "An animation player can't animate itself, only other players."
+#~ msgstr ""
+#~ "Un reproductor de animación no puede animarse a sí mismo, solo a otros "
+#~ "reproductores."
+
+#~ msgid "Clipboard is empty"
+#~ msgstr "El portapapeles está vacío"
 
 #~ msgid ""
 #~ "InterpolatedCamera has been deprecated and will be removed in Godot 4.0."
@@ -14976,9 +15036,6 @@ msgstr "Las constantes no pueden modificarse."
 
 #~ msgid "City"
 #~ msgstr "Ciudad"
-
-#~ msgid "State"
-#~ msgstr "Estado"
 
 #~ msgid "2 letter country code"
 #~ msgstr "Código de país de dos letras"

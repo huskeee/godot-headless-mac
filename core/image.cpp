@@ -1104,7 +1104,7 @@ void Image::resize(int p_width, int p_height, Interpolation p_interpolation) {
 void Image::crop_from_point(int p_x, int p_y, int p_width, int p_height) {
 
 	ERR_FAIL_COND_MSG(!_can_modify(format), "Cannot crop in compressed or custom image formats.");
-
+	ERR_FAIL_COND_MSG(write_lock.ptr(), "Cannot modify image when it is locked.");
 	ERR_FAIL_COND_MSG(p_x < 0, "Start x position cannot be smaller than 0.");
 	ERR_FAIL_COND_MSG(p_y < 0, "Start y position cannot be smaller than 0.");
 	ERR_FAIL_COND_MSG(p_width <= 0, "Width of image must be greater than 0.");
@@ -1351,7 +1351,8 @@ void Image::expand_x2_hq2x() {
 }
 
 void Image::shrink_x2() {
-
+	ERR_FAIL_COND(!_can_modify(format));
+	ERR_FAIL_COND_MSG(write_lock.ptr(), "Cannot modify image when it is locked.");
 	ERR_FAIL_COND(data.size() == 0);
 
 	if (mipmaps) {
@@ -1454,6 +1455,8 @@ void Image::normalize() {
 Error Image::generate_mipmaps(bool p_renormalize) {
 
 	ERR_FAIL_COND_V_MSG(!_can_modify(format), ERR_UNAVAILABLE, "Cannot generate mipmaps in compressed or custom image formats.");
+
+	ERR_FAIL_COND_V_MSG(write_lock.ptr(), ERR_UNAVAILABLE, "Cannot modify image when it is locked.");
 
 	ERR_FAIL_COND_V_MSG(format == FORMAT_RGBA4444 || format == FORMAT_RGBA5551, ERR_UNAVAILABLE, "Cannot generate mipmaps in custom image formats.");
 
@@ -1587,6 +1590,7 @@ void Image::create(int p_width, int p_height, bool p_use_mipmaps, Format p_forma
 	ERR_FAIL_COND_MSG(p_width > MAX_WIDTH, "Image width cannot be greater than " + itos(MAX_WIDTH) + ".");
 	ERR_FAIL_COND_MSG(p_height > MAX_HEIGHT, "Image height cannot be greater than " + itos(MAX_HEIGHT) + ".");
 	ERR_FAIL_COND_MSG(write_lock.ptr(), "Cannot create image when it is locked.");
+	ERR_FAIL_INDEX_MSG(p_format, FORMAT_MAX, "Image format out of range, please see Image's Format enum.");
 
 	int mm = 0;
 	int size = _get_dst_image_size(p_width, p_height, p_format, mm, p_use_mipmaps ? -1 : 0);
@@ -1607,6 +1611,7 @@ void Image::create(int p_width, int p_height, bool p_use_mipmaps, Format p_forma
 	ERR_FAIL_COND_MSG(p_height <= 0, "Image height must be greater than 0.");
 	ERR_FAIL_COND_MSG(p_width > MAX_WIDTH, "Image width cannot be greater than " + itos(MAX_WIDTH) + ".");
 	ERR_FAIL_COND_MSG(p_height > MAX_HEIGHT, "Image height cannot be greater than " + itos(MAX_HEIGHT) + ".");
+	ERR_FAIL_INDEX_MSG(p_format, FORMAT_MAX, "Image format out of range, please see Image's Format enum.");
 
 	int mm;
 	int size = _get_dst_image_size(p_width, p_height, p_format, mm, p_use_mipmaps ? -1 : 0);
@@ -3018,6 +3023,8 @@ void Image::premultiply_alpha() {
 }
 
 void Image::fix_alpha_edges() {
+	ERR_FAIL_COND(!_can_modify(format));
+	ERR_FAIL_COND_MSG(write_lock.ptr(), "Cannot modify image when it is locked.");
 
 	if (data.size() == 0)
 		return;

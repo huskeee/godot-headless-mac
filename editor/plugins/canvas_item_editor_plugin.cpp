@@ -51,6 +51,7 @@
 #include "scene/gui/viewport_container.h"
 #include "scene/main/canvas_layer.h"
 #include "scene/main/viewport.h"
+#include "scene/resources/dynamic_font.h"
 #include "scene/resources/packed_scene.h"
 
 #include <stdlib.h>
@@ -2109,11 +2110,13 @@ bool CanvasItemEditor::_gui_input_move(const Ref<InputEvent> &p_event) {
 
 			drag_to = transform.affine_inverse().xform(m->get_position());
 			Point2 previous_pos;
-			if (drag_selection.size() == 1) {
-				Transform2D xform = drag_selection[0]->get_global_transform_with_canvas() * drag_selection[0]->get_transform().affine_inverse();
-				previous_pos = xform.xform(drag_selection[0]->_edit_get_position());
-			} else {
-				previous_pos = _get_encompassing_rect_from_list(drag_selection).position;
+			if (!drag_selection.empty()) {
+				if (drag_selection.size() == 1) {
+					Transform2D xform = drag_selection[0]->get_global_transform_with_canvas() * drag_selection[0]->get_transform().affine_inverse();
+					previous_pos = xform.xform(drag_selection[0]->_edit_get_position());
+				} else {
+					previous_pos = _get_encompassing_rect_from_list(drag_selection).position;
+				}
 			}
 			Point2 new_pos = snap_point(previous_pos + (drag_to - drag_from), SNAP_GRID | SNAP_GUIDES | SNAP_PIXEL | SNAP_NODE_PARENT | SNAP_NODE_ANCHORS | SNAP_OTHER_NODES, 0, NULL, drag_selection);
 			bool single_axis = m->get_shift();
@@ -4076,6 +4079,12 @@ void CanvasItemEditor::_notification(int p_what) {
 		anchors_popup->add_icon_item(get_icon("ControlAlignWide", "EditorIcons"), TTR("Full Rect"), ANCHORS_PRESET_WIDE);
 
 		anchor_mode_button->set_icon(get_icon("Anchor", "EditorIcons"));
+
+		Ref<DynamicFont> font = zoom_reset->get_font("font")->duplicate(false);
+		font->set_outline_size(1);
+		font->set_outline_color(Color(0, 0, 0));
+		zoom_reset->add_font_override("font", font);
+		zoom_reset->add_color_override("font_color", Color(1, 1, 1));
 	}
 
 	if (p_what == NOTIFICATION_VISIBILITY_CHANGED) {

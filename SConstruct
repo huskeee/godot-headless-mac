@@ -151,6 +151,7 @@ opts.Add(BoolVariable("use_precise_math_checks", "Math checks use very precise e
 # Thirdparty libraries
 opts.Add(BoolVariable("builtin_bullet", "Use the built-in Bullet library", True))
 opts.Add(BoolVariable("builtin_certs", "Use the built-in SSL certificates bundles", True))
+opts.Add(BoolVariable("builtin_embree", "Use the built-in Embree library", True))
 opts.Add(BoolVariable("builtin_enet", "Use the built-in ENet library", True))
 opts.Add(BoolVariable("builtin_freetype", "Use the built-in FreeType library", True))
 opts.Add(BoolVariable("builtin_libogg", "Use the built-in libogg library", True))
@@ -194,7 +195,13 @@ elif env_base["p"] != "":
     selected_platform = env_base["p"]
 else:
     # Missing `platform` argument, try to detect platform automatically
-    if sys.platform.startswith("linux"):
+    if (
+        sys.platform.startswith("linux")
+        or sys.platform.startswith("dragonfly")
+        or sys.platform.startswith("freebsd")
+        or sys.platform.startswith("netbsd")
+        or sys.platform.startswith("openbsd")
+    ):
         selected_platform = "x11"
     elif sys.platform == "darwin":
         selected_platform = "osx"
@@ -212,7 +219,7 @@ else:
 if selected_platform in ["linux", "bsd", "linuxbsd"]:
     if selected_platform == "linuxbsd":
         # Alias for forward compatibility.
-        print('Platform "linuxbsd" is still called "x11" in Godot 3.2.x. Building for platform "x11".')
+        print('Platform "linuxbsd" is still called "x11" in Godot 3.x. Building for platform "x11".')
     # Alias for convenience.
     selected_platform = "x11"
 
@@ -421,17 +428,21 @@ if selected_platform in platform_list:
     else:  # GCC, Clang
         version = methods.get_compiler_version(env) or [-1, -1]
 
-        gcc_common_warnings = []
+        common_warnings = []
 
         if methods.using_gcc(env):
-            gcc_common_warnings += ["-Wno-misleading-indentation"]
+            common_warnings += ["-Wno-misleading-indentation"]
             if version[0] >= 7:
-                gcc_common_warnings += ["-Wshadow-local"]
+                common_warnings += ["-Wshadow-local"]
+        elif methods.using_clang(env) or methods.using_emcc(env):
+            # We often implement `operator<` for structs of pointers as a requirement
+            # for putting them in `Set` or `Map`. We don't mind about unreliable ordering.
+            common_warnings += ["-Wno-ordered-compare-function-pointers"]
 
         if env["warnings"] == "extra":
             # Note: enable -Wimplicit-fallthrough for Clang (already part of -Wextra for GCC)
             # once we switch to C++11 or later (necessary for our FALLTHROUGH macro).
-            env.Append(CCFLAGS=["-Wall", "-Wextra", "-Wwrite-strings", "-Wno-unused-parameter"] + gcc_common_warnings)
+            env.Append(CCFLAGS=["-Wall", "-Wextra", "-Wwrite-strings", "-Wno-unused-parameter"] + common_warnings)
             env.Append(CXXFLAGS=["-Wctor-dtor-privacy", "-Wnon-virtual-dtor"])
             if methods.using_gcc(env):
                 env.Append(
@@ -447,9 +458,9 @@ if selected_platform in platform_list:
                 if version[0] >= 9:
                     env.Append(CCFLAGS=["-Wattribute-alias=2"])
         elif env["warnings"] == "all":
-            env.Append(CCFLAGS=["-Wall"] + gcc_common_warnings)
+            env.Append(CCFLAGS=["-Wall"] + common_warnings)
         elif env["warnings"] == "moderate":
-            env.Append(CCFLAGS=["-Wall", "-Wno-unused"] + gcc_common_warnings)
+            env.Append(CCFLAGS=["-Wall", "-Wno-unused"] + common_warnings)
         else:  # 'no'
             env.Append(CCFLAGS=["-w"])
 

@@ -47,12 +47,14 @@
 #include "core/project_settings.h"
 #include "core/translation.h"
 #include "core/version.h"
+#include "core/version_hash.gen.h"
 #include "main/input_default.h"
 #include "main/main.h"
 #include "scene/gui/center_container.h"
 #include "scene/gui/control.h"
 #include "scene/gui/dialogs.h"
 #include "scene/gui/file_dialog.h"
+#include "scene/gui/link_button.h"
 #include "scene/gui/menu_button.h"
 #include "scene/gui/panel.h"
 #include "scene/gui/panel_container.h"
@@ -172,6 +174,9 @@
 #include <stdlib.h>
 
 EditorNode *EditorNode::singleton = NULL;
+
+// The metadata key used to store and retrieve the version text to copy to the clipboard.
+static const String META_TEXT_TO_COPY = "text_to_copy";
 
 void EditorNode::disambiguate_filenames(const Vector<String> p_full_paths, Vector<String> &r_filenames) {
 	// Keep track of a list of "index sets," i.e. sets of indices
@@ -509,6 +514,11 @@ void EditorNode::_notification(int p_what) {
 
 			_update_debug_options();
 
+			// Save the project after opening to mark it as last modified, except in headless mode.
+			if (OS::get_singleton()->can_draw() && !OS::get_singleton()->is_no_window_mode_enabled()) {
+				ProjectSettings::get_singleton()->save();
+			}
+
 			/* DO NOT LOAD SCENES HERE, WAIT FOR FILE SCANNING AND REIMPORT TO COMPLETE */
 		} break;
 
@@ -539,7 +549,7 @@ void EditorNode::_notification(int p_what) {
 
 		case EditorSettings::NOTIFICATION_EDITOR_SETTINGS_CHANGED: {
 			scene_tabs->set_tab_close_display_policy((bool(EDITOR_GET("interface/scene_tabs/always_show_close_button")) ? Tabs::CLOSE_BUTTON_SHOW_ALWAYS : Tabs::CLOSE_BUTTON_SHOW_ACTIVE_ONLY));
-			theme = create_editor_theme(theme_base->get_theme());
+			theme = create_custom_theme(theme_base->get_theme());
 
 			theme_base->set_theme(theme);
 			gui_base->set_theme(theme);
@@ -605,11 +615,11 @@ void EditorNode::_notification(int p_what) {
 			p->set_item_icon(p->get_item_index(HELP_SEARCH), gui_base->get_icon("HelpSearch", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_DOCS), gui_base->get_icon("Instance", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_QA), gui_base->get_icon("Instance", "EditorIcons"));
-			p->set_item_icon(p->get_item_index(HELP_ABOUT), gui_base->get_icon("Godot", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_REPORT_A_BUG), gui_base->get_icon("Instance", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_SEND_DOCS_FEEDBACK), gui_base->get_icon("Instance", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_COMMUNITY), gui_base->get_icon("Instance", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_ABOUT), gui_base->get_icon("Godot", "EditorIcons"));
+			p->set_item_icon(p->get_item_index(HELP_SUPPORT_GODOT_DEVELOPMENT), gui_base->get_icon("Heart", "EditorIcons"));
 
 			_update_update_spinner();
 		} break;
@@ -641,6 +651,18 @@ void EditorNode::_on_plugin_ready(Object *p_script, const String &p_activate_nam
 	project_settings->update_plugins();
 	project_settings->hide();
 	push_item(script.operator->());
+}
+
+void EditorNode::_remove_plugin_from_enabled(const String &p_name) {
+	ProjectSettings *ps = ProjectSettings::get_singleton();
+	PoolStringArray enabled_plugins = ps->get("editor_plugins/enabled");
+	for (int i = 0; i < enabled_plugins.size(); ++i) {
+		if (enabled_plugins.get(i) == p_name) {
+			enabled_plugins.remove(i);
+			break;
+		}
+	}
+	ps->set("editor_plugins/enabled", enabled_plugins);
 }
 
 void EditorNode::_resources_changed(const PoolVector<String> &p_resources) {
@@ -885,6 +907,10 @@ void EditorNode::_reload_project_settings() {
 }
 
 void EditorNode::_vp_resized() {
+}
+
+void EditorNode::_version_button_pressed() {
+	OS::get_singleton()->set_clipboard(version_btn->get_meta(META_TEXT_TO_COPY));
 }
 
 void EditorNode::_node_renamed() {
@@ -1321,8 +1347,9 @@ void EditorNode::_save_scene_with_preview(String p_file, int p_idx) {
 		} else {
 			// The 3D editor may be disabled as a feature, but scenes can still be opened.
 			// This check prevents the preview from regenerating in case those scenes are then saved.
+			// The preview will be generated if no feature profile is set (as the 3D editor is enabled by default).
 			Ref<EditorFeatureProfile> profile = feature_profile_manager->get_current_profile();
-			if (profile.is_valid() && !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_3D)) {
+			if (!profile.is_valid() || !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_3D)) {
 				img = SpatialEditor::get_singleton()->get_editor_viewport(0)->get_viewport_node()->get_texture()->get_data();
 			}
 		}
@@ -2706,7 +2733,7 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 						}
 
 						save_confirmation->get_ok()->set_text(TTR("Save & Quit"));
-						save_confirmation->set_text((p_option == FILE_QUIT ? TTR("Save changes to the following scene(s) before quitting?") : TTR("Save changes the following scene(s) before opening Project Manager?")) + unsaved_scenes);
+						save_confirmation->set_text((p_option == FILE_QUIT ? TTR("Save changes to the following scene(s) before quitting?") : TTR("Save changes to the following scene(s) before opening Project Manager?")) + unsaved_scenes);
 						save_confirmation->popup_centered_minsize();
 					}
 				}
@@ -2870,6 +2897,9 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 		} break;
 		case HELP_ABOUT: {
 			about->popup_centered_minsize(Size2(780, 500) * EDSCALE);
+		} break;
+		case HELP_SUPPORT_GODOT_DEVELOPMENT: {
+			OS::get_singleton()->shell_open("https://godotengine.org/donate");
 		} break;
 
 		case SET_VIDEO_DRIVER_SAVE_AND_RESTART: {
@@ -3183,10 +3213,11 @@ void EditorNode::remove_editor_plugin(EditorPlugin *p_editor, bool p_config_chan
 	p_editor->clear();
 	if (p_config_changed)
 		p_editor->disable_plugin();
-	singleton->editor_plugins_over->get_plugins_list().erase(p_editor);
+	singleton->editor_plugins_over->remove_plugin(p_editor);
+	singleton->editor_plugins_force_over->remove_plugin(p_editor);
+	singleton->editor_plugins_force_input_forwarding->remove_plugin(p_editor);
 	singleton->remove_child(p_editor);
 	singleton->editor_data.remove_editor_plugin(p_editor);
-	singleton->get_editor_plugins_force_input_forwarding()->remove_plugin(p_editor);
 }
 
 void EditorNode::_update_addon_config() {
@@ -3231,17 +3262,8 @@ void EditorNode::set_addon_plugin_enabled(String p_addon, bool p_enabled, bool p
 	Ref<ConfigFile> cf;
 	cf.instance();
 	if (!DirAccess::exists(p_addon.get_base_dir())) {
-		ProjectSettings *ps = ProjectSettings::get_singleton();
-		PoolStringArray enabled_plugins = ps->get("editor_plugins/enabled");
-		for (int i = 0; i < enabled_plugins.size(); ++i) {
-			if (enabled_plugins.get(i) == p_addon) {
-				enabled_plugins.remove(i);
-				break;
-			}
-		}
-		ps->set("editor_plugins/enabled", enabled_plugins);
-		ps->save();
-		WARN_PRINTS("Addon '" + p_addon + "' failed to load. No directory found. Removing from enabled plugins.");
+		_remove_plugin_from_enabled(p_addon);
+		WARN_PRINT("Addon '" + p_addon + "' failed to load. No directory found. Removing from enabled plugins.");
 		return;
 	}
 	Error err = cf->load(p_addon);
@@ -3270,7 +3292,8 @@ void EditorNode::set_addon_plugin_enabled(String p_addon, bool p_enabled, bool p
 
 		// Errors in the script cause the base_type to be an empty string.
 		if (String(script->get_instance_base_type()) == "") {
-			show_warning(vformat(TTR("Unable to load addon script from path: '%s' There seems to be an error in the code, please check the syntax."), script_path));
+			show_warning(vformat(TTR("Unable to load addon script from path: '%s'. This might be due to a code error in that script.\nDisabling the addon at '%s' to prevent further errors."), script_path, p_addon));
+			_remove_plugin_from_enabled(p_addon);
 			return;
 		}
 
@@ -5659,6 +5682,7 @@ void EditorNode::_bind_methods() {
 	ClassDB::bind_method("_close_messages", &EditorNode::_close_messages);
 	ClassDB::bind_method("_show_messages", &EditorNode::_show_messages);
 	ClassDB::bind_method("_vp_resized", &EditorNode::_vp_resized);
+	ClassDB::bind_method("_version_button_pressed", &EditorNode::_version_button_pressed);
 	ClassDB::bind_method("_quick_opened", &EditorNode::_quick_opened);
 	ClassDB::bind_method("_quick_run", &EditorNode::_quick_run);
 
@@ -6554,6 +6578,7 @@ EditorNode::EditorNode() {
 	p->add_icon_shortcut(gui_base->get_icon("Instance", "EditorIcons"), ED_SHORTCUT("editor/community", TTR("Community")), HELP_COMMUNITY);
 	p->add_separator();
 	p->add_icon_shortcut(gui_base->get_icon("Godot", "EditorIcons"), ED_SHORTCUT("editor/about", TTR("About")), HELP_ABOUT);
+	p->add_icon_shortcut(gui_base->get_icon("Heart", "EditorIcons"), ED_SHORTCUT("editor/support_development", TTR("Support Godot Development")), HELP_SUPPORT_GODOT_DEVELOPMENT);
 
 	HBoxContainer *play_hb = memnew(HBoxContainer);
 	menu_hb->add_child(play_hb);
@@ -6762,11 +6787,31 @@ EditorNode::EditorNode() {
 	bottom_panel_hb_editors->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 	bottom_panel_hb->add_child(bottom_panel_hb_editors);
 
-	version_label = memnew(Label);
-	version_label->set_text(VERSION_FULL_CONFIG);
+	VBoxContainer *version_info_vbc = memnew(VBoxContainer);
+	bottom_panel_hb->add_child(version_info_vbc);
+
+	// Add a dummy control node for vertical spacing.
+	Control *v_spacer = memnew(Control);
+	version_info_vbc->add_child(v_spacer);
+
+	version_btn = memnew(LinkButton);
+	version_btn->set_text(VERSION_FULL_CONFIG);
+	String hash = String(VERSION_HASH);
+	if (hash.length() != 0) {
+		hash = " " + vformat("[%s]", hash.left(9));
+	}
+	// Set the text to copy in metadata as it slightly differs from the button's text.
+	version_btn->set_meta(META_TEXT_TO_COPY, "v" VERSION_FULL_BUILD + hash);
 	// Fade out the version label to be less prominent, but still readable
-	version_label->set_self_modulate(Color(1, 1, 1, 0.6));
-	bottom_panel_hb->add_child(version_label);
+	version_btn->set_self_modulate(Color(1, 1, 1, 0.65));
+	version_btn->set_underline_mode(LinkButton::UNDERLINE_MODE_ON_HOVER);
+	version_btn->set_tooltip(TTR("Click to copy."));
+	version_btn->connect("pressed", this, "_version_button_pressed");
+	version_info_vbc->add_child(version_btn);
+
+	// Add a dummy control node for horizontal spacing.
+	Control *h_spacer = memnew(Control);
+	bottom_panel_hb->add_child(h_spacer);
 
 	bottom_panel_raise = memnew(ToolButton);
 	bottom_panel_raise->set_icon(gui_base->get_icon("ExpandBottomDock", "EditorIcons"));

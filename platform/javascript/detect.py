@@ -29,7 +29,7 @@ def get_opts():
     from SCons.Variables import BoolVariable
 
     return [
-        ("initial_memory", "Initial WASM memory (in MiB)", 16),
+        ("initial_memory", "Initial WASM memory (in MiB)", 32),
         BoolVariable("use_assertions", "Use Emscripten runtime assertions", False),
         BoolVariable("use_thinlto", "Use ThinLTO", False),
         BoolVariable("use_ubsan", "Use Emscripten undefined behavior sanitizer (UBSAN)", False),
@@ -126,7 +126,6 @@ def configure(env):
         env.Append(CCFLAGS=["-fsanitize=leak"])
         env.Append(LINKFLAGS=["-fsanitize=leak"])
     if env["use_safe_heap"]:
-        env.Append(CCFLAGS=["-s", "SAFE_HEAP=1"])
         env.Append(LINKFLAGS=["-s", "SAFE_HEAP=1"])
 
     # Closure compiler
@@ -172,7 +171,7 @@ def configure(env):
     # Program() output consists of multiple files, so specify suffixes manually at builder.
     env["PROGSUFFIX"] = ""
     env["LIBPREFIX"] = "lib"
-    env["LIBSUFFIX"] = ".bc"
+    env["LIBSUFFIX"] = ".a"
     env["LIBPREFIXES"] = ["$LIBPREFIX"]
     env["LIBSUFFIXES"] = ["$LIBSUFFIX"]
 
@@ -226,8 +225,8 @@ def configure(env):
     # Allow use to take control of swapping WebGL buffers.
     env.Append(LINKFLAGS=["-s", "OFFSCREEN_FRAMEBUFFER=1"])
 
-    # callMain for manual start.
-    env.Append(LINKFLAGS=["-s", "EXTRA_EXPORTED_RUNTIME_METHODS=['callMain','cwrap']"])
+    # callMain for manual start, cwrap for the mono version.
+    env.Append(LINKFLAGS=["-s", "EXPORTED_RUNTIME_METHODS=['callMain','cwrap']"])
 
     # Add code that allow exiting runtime.
     env.Append(LINKFLAGS=["-s", "EXIT_RUNTIME=1"])

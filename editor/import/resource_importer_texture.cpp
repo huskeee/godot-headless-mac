@@ -222,6 +222,7 @@ void ResourceImporterTexture::get_import_options(List<ImportOption> *r_options, 
 void ResourceImporterTexture::_save_stex(const Ref<Image> &p_image, const String &p_to_path, int p_compress_mode, float p_lossy_quality, Image::CompressMode p_vram_compression, bool p_mipmaps, int p_texture_flags, bool p_streamable, bool p_detect_3d, bool p_detect_srgb, bool p_force_rgbe, bool p_detect_normal, bool p_force_normal, bool p_force_po2_for_compressed) {
 
 	FileAccess *f = FileAccess::open(p_to_path, FileAccess::WRITE);
+	ERR_FAIL_NULL(f);
 	f->store_8('G');
 	f->store_8('D');
 	f->store_8('S');
@@ -404,8 +405,24 @@ Error ResourceImporterTexture::import(const String &p_source_file, const String 
 	Array formats_imported;
 
 	int tex_flags = 0;
-	if (repeat > 0)
+	if (repeat > 0) {
 		tex_flags |= Texture::FLAG_REPEAT;
+
+		const bool min_gles3 = GLOBAL_GET("rendering/quality/driver/driver_name") == "GLES3" &&
+							   !GLOBAL_GET("rendering/quality/driver/fallback_to_gles2");
+		if (!min_gles3 && !image->is_size_po2()) {
+			// The project can be run using GLES2. GLES2 does not guarantee that
+			// repeating textures with a non-power-of-two size will be displayed
+			// without artifacts (due to upscaling to the nearest power of 2).
+			if (GLOBAL_GET("rendering/quality/driver/fallback_to_gles2")) {
+				WARN_PRINT(vformat("%s: Imported a repeating texture with a size of %dx%d, but the project is configured to allow falling back to GLES2.\nNon-power-of-2 repeating textures may not display correctly on some platforms such as HTML5. This is because GLES2 does not mandate support for non-power-of-2 repeating textures.",
+						p_source_file, image->get_width(), image->get_height()));
+			} else {
+				WARN_PRINT(vformat("%s: Imported a repeating texture with a size of %dx%d, but the project is configured to use GLES2.\nNon-power-of-2 repeating textures may not display correctly on some platforms such as HTML5. This is because GLES2 does not mandate support for non-power-of-2 repeating textures.",
+						p_source_file, image->get_width(), image->get_height()));
+			}
+		}
+	}
 	if (repeat == 2)
 		tex_flags |= Texture::FLAG_MIRRORED_REPEAT;
 	if (filter)

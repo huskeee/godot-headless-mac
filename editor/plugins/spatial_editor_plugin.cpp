@@ -81,10 +81,10 @@ void ViewportRotationControl::_notification(int p_what) {
 		axis_menu_options.clear();
 		axis_menu_options.push_back(SpatialEditorViewport::VIEW_RIGHT);
 		axis_menu_options.push_back(SpatialEditorViewport::VIEW_TOP);
-		axis_menu_options.push_back(SpatialEditorViewport::VIEW_FRONT);
+		axis_menu_options.push_back(SpatialEditorViewport::VIEW_REAR);
 		axis_menu_options.push_back(SpatialEditorViewport::VIEW_LEFT);
 		axis_menu_options.push_back(SpatialEditorViewport::VIEW_BOTTOM);
-		axis_menu_options.push_back(SpatialEditorViewport::VIEW_REAR);
+		axis_menu_options.push_back(SpatialEditorViewport::VIEW_FRONT);
 
 		axis_colors.clear();
 		axis_colors.push_back(get_color("axis_x_color", "Editor"));
@@ -341,7 +341,7 @@ void SpatialEditorViewport::_update_camera(float p_interp_delta) {
 		equal = false;
 	}
 
-	if (!equal || p_interp_delta == 0 || is_freelook_active() || is_orthogonal != orthogonal) {
+	if (!equal || p_interp_delta == 0 || is_orthogonal != orthogonal) {
 		camera->set_global_transform(to_camera_transform(camera_cursor));
 
 		if (orthogonal) {
@@ -1357,9 +1357,14 @@ void SpatialEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 					}
 
 					if (_edit.mode != TRANSFORM_NONE) {
-
-						static const char *_transform_name[4] = { "None", "Rotate", "Translate", "Scale" };
-						undo_redo->create_action(_transform_name[_edit.mode]);
+						static const char *_transform_name[4] = {
+							TTRC("None"),
+							TTRC("Rotate"),
+							// TRANSLATORS: This refers to the movement that changes the position of an object.
+							TTRC("Translate"),
+							TTRC("Scale"),
+						};
+						undo_redo->create_action(TTRGET(_transform_name[_edit.mode]));
 
 						List<Node *> &selection = editor_selection->get_selected_node_list();
 
@@ -4875,11 +4880,11 @@ void SpatialEditor::_update_camera_override_button(bool p_game_running) {
 
 	if (p_game_running) {
 		button->set_disabled(false);
-		button->set_tooltip(TTR("Game Camera Override\nNo game instance running."));
+		button->set_tooltip(TTR("Game Camera Override\nOverrides game camera with editor viewport camera."));
 	} else {
 		button->set_disabled(true);
 		button->set_pressed(false);
-		button->set_tooltip(TTR("Game Camera Override\nOverrides game camera with editor viewport camera."));
+		button->set_tooltip(TTR("Game Camera Override\nNo game instance running."));
 	}
 }
 

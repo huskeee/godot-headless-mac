@@ -51,12 +51,15 @@
 # Kareem Abduljaleel <karemjaleel34@gmail.com>, 2021.
 # ILG - Game <moegypt277@gmail.com>, 2021.
 # Hatim Jamal <hatimjamal8@gmail.com>, 2021.
+# HASSAN GAMER - حسن جيمر <gamerhassan55@gmail.com>, 2021.
+# abubakrAlsaab <madeinsudan19@gmail.com>, 2021.
+# Hafid Talbi <atalbiie@gmail.com>, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: Godot Engine editor\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2021-04-16 07:52+0000\n"
-"Last-Translator: Hatim Jamal <hatimjamal8@gmail.com>\n"
+"PO-Revision-Date: 2021-07-29 02:33+0000\n"
+"Last-Translator: Hafid Talbi <atalbiie@gmail.com>\n"
 "Language-Team: Arabic <https://hosted.weblate.org/projects/godot-engine/"
 "godot/ar/>\n"
 "Language: ar\n"
@@ -65,7 +68,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
 "&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5;\n"
-"X-Generator: Weblate 4.6-dev\n"
+"X-Generator: Weblate 4.7.2-dev\n"
 
 #: core/math/expression.cpp modules/gdscript/gdscript_functions.cpp
 #: modules/visual_script/visual_script_builtin_funcs.cpp
@@ -88,7 +91,7 @@ msgstr "مدخلات خاطئة %i (لم يتم تمريره) في التعبي�
 
 #: core/math/expression.cpp
 msgid "self can't be used because instance is null (not passed)"
-msgstr "لا يمكن إستخدامه نفسه لأن الحالة فارغة (لم يُمرر)"
+msgstr "لا يمكن استخدام self لأن النموذج فارغ (لم يتم ادخاله)"
 
 #: core/math/expression.cpp
 msgid "Invalid operands to operator %s, %s and %s."
@@ -455,10 +458,6 @@ msgid "Animation tracks can only point to AnimationPlayer nodes."
 msgstr "مسارات الحركة يمكنها فقط أن تشير إلى عُقد مشغّل الحركة."
 
 #: editor/animation_track_editor.cpp
-msgid "An animation player can't animate itself, only other players."
-msgstr "مشغل الحركة لا يمكنه أن يحرك نفسه, فقط الاعبين الأخرين."
-
-#: editor/animation_track_editor.cpp
 msgid "Not possible to add a new track without a root"
 msgstr "لا يمكن إضافة مقطع جديد بدون جذر"
 
@@ -503,8 +502,9 @@ msgid "Anim Move Keys"
 msgstr "مفتاح حركة التحريك"
 
 #: editor/animation_track_editor.cpp
-msgid "Clipboard is empty"
-msgstr "الحافظة (Clipboard) فارغة"
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Clipboard is empty!"
+msgstr "الحافظة فارغة!"
 
 #: editor/animation_track_editor.cpp
 msgid "Paste Tracks"
@@ -1153,6 +1153,10 @@ msgstr "تغيير قيمة في القاموس"
 #: editor/editor_about.cpp
 msgid "Thanks from the Godot community!"
 msgstr "شكراً من مجتمع غودوت!"
+
+#: editor/editor_about.cpp editor/editor_node.cpp editor/project_manager.cpp
+msgid "Click to copy."
+msgstr "انقر للنسخ"
 
 #: editor/editor_about.cpp
 msgid "Godot Engine contributors"
@@ -2527,7 +2531,7 @@ msgid "Save changes to the following scene(s) before quitting?"
 msgstr "هل تريد حفظ التغييرات للمشاهد التالية قبل الخروج؟"
 
 #: editor/editor_node.cpp
-msgid "Save changes the following scene(s) before opening Project Manager?"
+msgid "Save changes to the following scene(s) before opening Project Manager?"
 msgstr ""
 "هل تود حفظ التغييرات التي اجريت على المشاهد الحالية قبل فتح نافذة ادارة "
 "المشروع؟"
@@ -2566,11 +2570,13 @@ msgstr "غير قادر علي تحميل النص البرمجي للإضافة
 
 #: editor/editor_node.cpp
 msgid ""
-"Unable to load addon script from path: '%s' There seems to be an error in "
-"the code, please check the syntax."
+"Unable to load addon script from path: '%s'. This might be due to a code "
+"error in that script.\n"
+"Disabling the addon at '%s' to prevent further errors."
 msgstr ""
-"غير قادر علي تحميل النص البرمجي الإضافب من المسار: '%s' يبدو أن شِفرة "
-"البرمجية يوجد بها أخطاء , الرجاء مراجعة الشِفرة البرمجية."
+"غير قادر علي تحميل النص البرمجي للإضافة  من المسار: '%s'. يبدو أنه يوجد خطأ "
+"في ذلك النص البرمجي.\n"
+" تعطيل الإضافة في '%s' كي لا تحصل أخطاء."
 
 #: editor/editor_node.cpp
 msgid ""
@@ -2859,9 +2865,8 @@ msgstr ""
 "لا تحتاج إلى تمكينه لاستخدام مصحح أخطاء GDScript محليًا."
 
 #: editor/editor_node.cpp
-#, fuzzy
 msgid "Small Deploy with Network Filesystem"
-msgstr "نشر مصغر مع نظام شبكات الملفات"
+msgstr "نشر مصغر مع نظام ملفات الشبكة"
 
 #: editor/editor_node.cpp
 msgid ""
@@ -2895,35 +2900,32 @@ msgid "Visible Navigation"
 msgstr "الإنتقال المرئي"
 
 #: editor/editor_node.cpp
-#, fuzzy
 msgid ""
 "When this option is enabled, navigation meshes and polygons will be visible "
 "in the running project."
 msgstr ""
-"مجسمات التنقل والأشكال المضلعة سوف تكون ظاهرة حينما يتم تفعيل هذا الإعداد."
+"عندما يكون هذا الخيار مفعل,مجسمات التنقل والأشكال المضلعة سوف تكون ظاهرة في "
+"المشروع المشغل."
 
 #: editor/editor_node.cpp
-#, fuzzy
 msgid "Synchronize Scene Changes"
 msgstr "مزامنة تغييرات المشهد"
 
 #: editor/editor_node.cpp
-#, fuzzy
 msgid ""
 "When this option is enabled, any changes made to the scene in the editor "
 "will be replicated in the running project.\n"
 "When used remotely on a device, this is more efficient when the network "
 "filesystem option is enabled."
 msgstr ""
-"حينما يكون هذا الإعداد مُفعل، أي تغيير يحدث في المشهد من خلال المُعدل سوف يتم "
+"حينما يكون هذا الخيار مُفعل، أي تغيير يحدث في المشهد من خلال المُعدل سوف يتم "
 "تطبيقة في اللعبة العاملة.\n"
 "حينما يتم إستخدامه عن بعد علي جهاز، سيكون هذا أكثر فعالية مع نظام شبكات "
 "الملفات."
 
 #: editor/editor_node.cpp
-#, fuzzy
 msgid "Synchronize Script Changes"
-msgstr "مزامنة تغييرات الكود"
+msgstr "مزامنة تغييرات النص البرمجي"
 
 #: editor/editor_node.cpp
 #, fuzzy
@@ -3014,6 +3016,10 @@ msgstr "المجتمع"
 #: editor/editor_node.cpp
 msgid "About"
 msgstr "حول"
+
+#: editor/editor_node.cpp
+msgid "Support Godot Development"
+msgstr "إدعم تطوير محرك غو-دوت"
 
 #: editor/editor_node.cpp
 msgid "Play the project."
@@ -3826,9 +3832,8 @@ msgid "Duplicate..."
 msgstr "تكرير..."
 
 #: editor/filesystem_dock.cpp
-#, fuzzy
 msgid "Move to Trash"
-msgstr "نقل التحميل التلقائي"
+msgstr "نقل الي سلة المحذوفات"
 
 #: editor/filesystem_dock.cpp editor/plugins/animation_player_editor_plugin.cpp
 msgid "Rename..."
@@ -3939,19 +3944,16 @@ msgid "Searching..."
 msgstr "جاري البحث..."
 
 #: editor/find_in_files.cpp
-#, fuzzy
 msgid "%d match in %d file."
-msgstr "%d تطابقات."
+msgstr "d% تطابق في d% الملف."
 
 #: editor/find_in_files.cpp
-#, fuzzy
 msgid "%d matches in %d file."
-msgstr "%d تطابقات."
+msgstr "d% تطابقات في d% الملف."
 
 #: editor/find_in_files.cpp
-#, fuzzy
 msgid "%d matches in %d files."
-msgstr "%d تطابقات."
+msgstr "d% تطابقات في d% الملف."
 
 #: editor/groups_editor.cpp
 msgid "Add to Group"
@@ -4088,18 +4090,16 @@ msgid "Saving..."
 msgstr "جاري الحفظ..."
 
 #: editor/import_defaults_editor.cpp
-#, fuzzy
 msgid "Select Importer"
-msgstr "تحديد الوضع"
+msgstr "حدد المستورد"
 
 #: editor/import_defaults_editor.cpp
 msgid "Importer:"
 msgstr "المستورد:"
 
 #: editor/import_defaults_editor.cpp
-#, fuzzy
 msgid "Reset to Defaults"
-msgstr "تحميل الإفتراضي"
+msgstr "اعادة التعيين للإفتراضيات"
 
 #: editor/import_dock.cpp
 msgid "Keep File (No Import)"
@@ -4666,7 +4666,7 @@ msgstr "أدوات الرسم المتحرك"
 
 #: editor/plugins/animation_player_editor_plugin.cpp
 msgid "Animation"
-msgstr "الرسم المتحرك"
+msgstr "رسوم متحركة"
 
 #: editor/plugins/animation_player_editor_plugin.cpp
 msgid "Edit Transitions..."
@@ -5071,9 +5071,8 @@ msgid "Got:"
 msgstr "ما تم الحصول عليه:"
 
 #: editor/plugins/asset_library_editor_plugin.cpp
-#, fuzzy
 msgid "Failed SHA-256 hash check"
-msgstr "فشل التاكد من ترميز sha256"
+msgstr "فشل في تجزئة SHA-256"
 
 #: editor/plugins/asset_library_editor_plugin.cpp
 msgid "Asset Download Error:"
@@ -5214,9 +5213,10 @@ msgstr ""
 "الضوء المعدة مسبقا."
 
 #: editor/plugins/baked_lightmap_editor_plugin.cpp
+#, fuzzy
 msgid ""
-"No meshes to bake. Make sure they contain an UV2 channel and that the 'Bake "
-"Light' flag is on."
+"No meshes to bake. Make sure they contain an UV2 channel and that the 'Use "
+"In Baked Light' and 'Generate Lightmap' flags are on."
 msgstr ""
 "لايوجد ميش لكي يتم تجهيزة. تاكد من انه يحتوي على منفذ UV2 و ان زر الضوء "
 "'المعد' مفعل."
@@ -5238,6 +5238,7 @@ msgstr ""
 "[0.0،1.0]."
 
 #: editor/plugins/baked_lightmap_editor_plugin.cpp
+#, fuzzy
 msgid ""
 "Godot editor was built without ray tracing support, lightmaps can't be baked."
 msgstr "تم تجميع محرر Godot دون دعم لتتبع الأشعة. لا يمكن بناء خرائط الإضاءة."
@@ -5340,7 +5341,7 @@ msgstr "تعديل حجم العقدة \"Node2D \"%s إلى (s, %s%)"
 
 #: editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Resize Control \"%s\" to (%d, %d)"
-msgstr ""
+msgstr "تغيير حجم عنصر التحكم \"٪ s\" إلى (٪ d،٪ d)"
 
 #: editor/plugins/canvas_item_editor_plugin.cpp
 #, fuzzy
@@ -7349,6 +7350,28 @@ msgid "View Plane Transform."
 msgstr "إظهار تحولات المستوى."
 
 #: editor/plugins/spatial_editor_plugin.cpp
+#: editor/plugins/texture_region_editor_plugin.cpp
+#: scene/resources/visual_shader.cpp
+msgid "None"
+msgstr "لا شيء"
+
+#: editor/plugins/spatial_editor_plugin.cpp
+#, fuzzy
+msgid "Rotate"
+msgstr "وضع التدوير"
+
+#. TRANSLATORS: This refers to the movement that changes the position of an object.
+#: editor/plugins/spatial_editor_plugin.cpp
+#, fuzzy
+msgid "Translate"
+msgstr "الترجمة:"
+
+#: editor/plugins/spatial_editor_plugin.cpp
+#, fuzzy
+msgid "Scale"
+msgstr "تكبير/تصغير:"
+
+#: editor/plugins/spatial_editor_plugin.cpp
 msgid "Scaling: "
 msgstr "يُحجم: "
 
@@ -7564,6 +7587,7 @@ msgstr "تدوير الرؤية مقفول"
 msgid ""
 "To zoom further, change the camera's clipping planes (View -> Settings...)"
 msgstr ""
+"للتكبير بشكل أكبر ، قم بتغيير مستويات اقتصاص الكاميرا (عرض -> الإعدادات ...)"
 
 #: editor/plugins/spatial_editor_plugin.cpp
 msgid ""
@@ -8004,11 +8028,6 @@ msgid "Snap Mode:"
 msgstr "وضع المحاذاة:"
 
 #: editor/plugins/texture_region_editor_plugin.cpp
-#: scene/resources/visual_shader.cpp
-msgid "None"
-msgstr "لا شيء"
-
-#: editor/plugins/texture_region_editor_plugin.cpp
 msgid "Pixel Snap"
 msgstr "محاذاة البكسل"
 
@@ -8354,7 +8373,7 @@ msgstr "تنقل"
 
 #: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Bitmask"
-msgstr "قناع البِت"
+msgstr "قناع-البِت"
 
 #: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Priority"
@@ -9534,7 +9553,7 @@ msgstr ""
 
 #: editor/plugins/visual_shader_editor_plugin.cpp
 msgid "A reference to an existing uniform."
-msgstr ""
+msgstr "إشارة إلى زي موحد موجود."
 
 #: editor/plugins/visual_shader_editor_plugin.cpp
 msgid "(Fragment/Light mode only) Scalar derivative function."
@@ -9901,7 +9920,7 @@ msgstr "OpenGL ES 3.0"
 
 #: editor/project_manager.cpp
 msgid "Not supported by your GPU drivers."
-msgstr ""
+msgstr "غير مدعوم من قبل برامج تشغيل GPU(اجهزة اارسوم) الخاصة بك."
 
 #: editor/project_manager.cpp
 msgid ""
@@ -10146,7 +10165,7 @@ msgstr "زر الفأرة"
 
 #: editor/project_settings_editor.cpp
 msgid ""
-"Invalid action name. it cannot be empty nor contain '/', ':', '=', '\\' or "
+"Invalid action name. It cannot be empty nor contain '/', ':', '=', '\\' or "
 "'\"'"
 msgstr ""
 "اسم فعالية غير صحيح. لا يمكن أن يكون فارغاً أو يتضمن '/'، ':'، '='، '\\' أو "
@@ -10957,6 +10976,9 @@ msgid ""
 "every time it updates.\n"
 "Switch back to the Local scene tree dock to improve performance."
 msgstr ""
+"إذا تم تحديده ، فسيؤدي شجرة المشهد إلى توقف المشروع في كل مرة يتم فيها "
+"تحديثه.\n"
+"قم بالتبديل مرة أخرى إلى رصيف شجرة المشهد المحلي لتحسين الأداء."
 
 #: editor/scene_tree_dock.cpp
 msgid "Local"
@@ -11564,6 +11586,11 @@ msgid "GridMap Paint"
 msgstr "تلوين (طلاء) خريطة الشبكة GridMap"
 
 #: modules/gridmap/grid_map_editor_plugin.cpp
+#, fuzzy
+msgid "GridMap Selection"
+msgstr "تحديد الملئ خريطة-الشبكة"
+
+#: modules/gridmap/grid_map_editor_plugin.cpp
 msgid "Grid Map"
 msgstr "خريطة الشبكة"
 
@@ -11655,11 +11682,11 @@ msgstr ""
 
 #: modules/lightmapper_cpu/lightmapper_cpu.cpp
 msgid "Begin Bake"
-msgstr ""
+msgstr "ابدأ الخبز (دمج تاثير الضوء في الصورة )"
 
 #: modules/lightmapper_cpu/lightmapper_cpu.cpp
 msgid "Preparing data structures"
-msgstr ""
+msgstr "تحضير هياكل البيانات"
 
 #: modules/lightmapper_cpu/lightmapper_cpu.cpp
 #, fuzzy
@@ -11813,6 +11840,16 @@ msgstr "أضف منفذ أدخال"
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Add Output Port"
 msgstr "أضف منفذ إخراج"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Change Port Type"
+msgstr "تغيير النوع"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Change Port Name"
+msgstr "غيّر اسم منفذ المُدخلات"
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Override an existing built-in function."
@@ -11990,10 +12027,6 @@ msgstr "تغيير حجم التعليق"
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Can't copy the function node."
 msgstr "لا يمكن نسخ الوظيفة البرمجية للعُقدة."
-
-#: modules/visual_script/visual_script_editor.cpp
-msgid "Clipboard is empty!"
-msgstr "الحافظة فارغة!"
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Paste VisualScript Nodes"
@@ -12194,7 +12227,7 @@ msgstr "اختر جهازاً من القائمة"
 
 #: platform/android/export/export.cpp
 msgid "Unable to find the 'apksigner' tool."
-msgstr ""
+msgstr "تعذر العثور على أداة توقيع تطبيق اندرويد\"apksigner\"."
 
 #: platform/android/export/export.cpp
 msgid ""
@@ -12204,10 +12237,22 @@ msgstr ""
 "لم يتم تنزيل قالب بناء Android لهذا المشروع. نزّل واحداً من قائمة المشروع."
 
 #: platform/android/export/export.cpp
+msgid ""
+"Either Debug Keystore, Debug User AND Debug Password settings must be "
+"configured OR none of them."
+msgstr ""
+
+#: platform/android/export/export.cpp
 msgid "Debug keystore not configured in the Editor Settings nor in the preset."
 msgstr ""
 "مُنقح أخطاء مفتاح المتجر keystore غير مُهيئ في إعدادت المُحرر أو في الإعدادات "
 "الموضوعة سلفاً."
+
+#: platform/android/export/export.cpp
+msgid ""
+"Either Release Keystore, Release User AND Release Password settings must be "
+"configured OR none of them."
+msgstr ""
 
 #: platform/android/export/export.cpp
 msgid "Release keystore incorrectly configured in the export preset."
@@ -13181,6 +13226,12 @@ msgstr "يمكن تعيين المتغيرات فقط في الذروة ."
 #: servers/visual/shader_language.cpp
 msgid "Constants cannot be modified."
 msgstr "لا يمكن تعديل الثوابت."
+
+#~ msgid "An animation player can't animate itself, only other players."
+#~ msgstr "مشغل الحركة لا يمكنه أن يحرك نفسه, فقط الاعبين الأخرين."
+
+#~ msgid "Clipboard is empty"
+#~ msgstr "الحافظة (Clipboard) فارغة"
 
 #~ msgid "No"
 #~ msgstr "لا"

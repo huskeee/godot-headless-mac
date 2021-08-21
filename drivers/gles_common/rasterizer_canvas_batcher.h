@@ -179,6 +179,7 @@ public:
 		// in the case of DEFAULT, this is num commands.
 		// with rects, is number of command and rects.
 		// with lines, is number of lines
+		// with polys, is number of indices (actual rendered verts)
 		uint32_t num_commands;
 
 		// first vertex of this batch in the vertex lists
@@ -193,6 +194,29 @@ public:
 			// for default batches we will store the parent item
 			const RasterizerCanvas::Item *item;
 		};
+
+		uint32_t get_num_verts() const {
+			switch (type) {
+				default: {
+				} break;
+				case RasterizerStorageCommon::BT_RECT: {
+					return num_commands * 4;
+				} break;
+				case RasterizerStorageCommon::BT_LINE: {
+					return num_commands * 2;
+				} break;
+				case RasterizerStorageCommon::BT_LINE_AA: {
+					return num_commands * 2;
+				} break;
+				case RasterizerStorageCommon::BT_POLY: {
+					return num_commands;
+				} break;
+			}
+
+			// error condition
+			WARN_PRINT_ONCE("reading num_verts from incorrect batch type");
+			return 0;
+		}
 	};
 
 	struct BatchTex {
@@ -477,9 +501,10 @@ public:
 		TransformMode orig_transform_mode;
 
 		// support for extra matrices
-		bool extra_matrix_sent; // whether sent on this item (in which case sofware transform can't be used untl end of item)
+		bool extra_matrix_sent; // whether sent on this item (in which case software transform can't be used untl end of item)
 		int transform_extra_command_number_p1; // plus one to allow fast checking against zero
 		Transform2D transform_combined; // final * extra
+		Transform2D skeleton_base_inverse_xform; // used in software skinning
 	};
 
 	// used during try_join
@@ -563,7 +588,7 @@ protected:
 	bool _detect_item_batch_break(RenderItemState &r_ris, RasterizerCanvas::Item *p_ci, bool &r_batch_break);
 
 	// drives the loop filling batches and flushing
-	void render_joined_item_commands(const BItemJoined &p_bij, RasterizerCanvas::Item *p_current_clip, bool &r_reclip, typename T_STORAGE::Material *p_material, bool p_lit);
+	void render_joined_item_commands(const BItemJoined &p_bij, RasterizerCanvas::Item *p_current_clip, bool &r_reclip, typename T_STORAGE::Material *p_material, bool p_lit, const RenderItemState &p_ris);
 
 private:
 	// flush once full or end of joined item
@@ -1596,7 +1621,15 @@ bool C_PREAMBLE::_prefill_polygon(RasterizerCanvas::Item::CommandPolygon *p_poly
 	// could be done with a temporary vertex buffer
 	BatchVertex *bvs = bdata.vertices.request(num_inds);
 	if (!bvs) {
-		// run out of space in the vertex buffer .. finish this function and draw what we have so far
+		// run out of space in the vertex buffer
+		// check for special case where the batching buffer is simply not big enough to fit this primitive.
+		if (!bdata.vertices.size()) {
+			// can't draw, ignore the primitive, otherwise we would enter an infinite loop
+			WARN_PRINT_ONCE("poly has too many indices to draw, increase batch buffer size");
+			return false;
+		}
+
+		// .. finish this function and draw what we have so far
 		// return where we got to
 		r_command_start = command_num;
 		return true;
@@ -1628,9 +1661,8 @@ bool C_PREAMBLE::_prefill_polygon(RasterizerCanvas::Item::CommandPolygon *p_poly
 		const Transform2D &tr = r_fill_state.transform_combined;
 
 		pBT[0].translate.set(tr.elements[2]);
-		// could do swizzling in shader?
-		pBT[0].basis[0].set(tr.elements[0][0], tr.elements[1][0]);
-		pBT[0].basis[1].set(tr.elements[0][1], tr.elements[1][1]);
+		pBT[0].basis[0].set(tr.elements[0][0], tr.elements[0][1]);
+		pBT[0].basis[1].set(tr.elements[1][0], tr.elements[1][1]);
 	}
 	////////////////////////////////////
 
@@ -1792,9 +1824,12 @@ PREAMBLE(bool)::_software_skin_poly(RasterizerCanvas::Item::CommandPolygon *p_po
 	Vector2 *pTemps = (Vector2 *)alloca(num_verts * sizeof(Vector2));
 	memset((void *)pTemps, 0, num_verts * sizeof(Vector2));
 
-	// these are used in the shader but don't appear to be needed for software transform
-	//	const Transform2D &skel_trans = get_this()->state.skeleton_transform;
-	//	const Transform2D &skel_trans_inv = get_this()->state.skeleton_transform_inverse;
+	// only the inverse appears to be needed
+	const Transform2D &skel_trans_inv = p_fill_state.skeleton_base_inverse_xform;
+	// we can't get this from the state, because more than one skeleton item may have been joined together..
+	// we need to handle the base skeleton on a per item basis as the joined item is rendered.
+	// const Transform2D &skel_trans = get_this()->state.skeleton_transform;
+	// const Transform2D &skel_trans_inv = get_this()->state.skeleton_transform_inverse;
 
 	// get the bone transforms.
 	// this is not ideal because we don't know in advance which bones are needed
@@ -1806,7 +1841,10 @@ PREAMBLE(bool)::_software_skin_poly(RasterizerCanvas::Item::CommandPolygon *p_po
 
 	if (num_verts && (p_poly->bones.size() == num_verts * 4) && (p_poly->weights.size() == p_poly->bones.size())) {
 
-		const Transform2D &item_transform = p_item->xform;
+		// instead of using the p_item->xform we use the final transform,
+		// because we want the poly transform RELATIVE to the base skeleton.
+		Transform2D item_transform = skel_trans_inv * p_item->final_transform;
+
 		Transform2D item_transform_inv = item_transform.affine_inverse();
 
 		for (int n = 0; n < num_verts; n++) {
@@ -1847,17 +1885,23 @@ PREAMBLE(bool)::_software_skin_poly(RasterizerCanvas::Item::CommandPolygon *p_po
 			}
 		}
 
-		// software transform with combined matrix?
-		if (p_fill_state.transform_mode != TM_NONE) {
-			for (int n = 0; n < num_verts; n++) {
-				Vector2 &dst_pos = pTemps[n];
-				_software_transform_vertex(dst_pos, p_fill_state.transform_combined);
-			}
-		}
-
 	} // if bone format matches
 	else {
-		// not supported
+		// not rigged properly, just copy the verts directly
+		for (int n = 0; n < num_verts; n++) {
+			const Vector2 &src_pos = p_poly->points[n];
+			Vector2 &dst_pos = pTemps[n];
+
+			dst_pos = src_pos;
+		}
+	}
+
+	// software transform with combined matrix?
+	if (p_fill_state.transform_mode != TM_NONE) {
+		for (int n = 0; n < num_verts; n++) {
+			Vector2 &dst_pos = pTemps[n];
+			_software_transform_vertex(dst_pos, p_fill_state.transform_combined);
+		}
 	}
 
 	// output to the batch verts
@@ -2502,7 +2546,7 @@ PREAMBLE(void)::flush_render_batches(RasterizerCanvas::Item *p_first_item, Raste
 #endif
 }
 
-PREAMBLE(void)::render_joined_item_commands(const BItemJoined &p_bij, RasterizerCanvas::Item *p_current_clip, bool &r_reclip, typename T_STORAGE::Material *p_material, bool p_lit) {
+PREAMBLE(void)::render_joined_item_commands(const BItemJoined &p_bij, RasterizerCanvas::Item *p_current_clip, bool &r_reclip, typename T_STORAGE::Material *p_material, bool p_lit, const RenderItemState &p_ris) {
 
 	RasterizerCanvas::Item *item = 0;
 	RasterizerCanvas::Item *first_item = bdata.item_refs[p_bij.first_item_ref].item;
@@ -2523,6 +2567,13 @@ PREAMBLE(void)::render_joined_item_commands(const BItemJoined &p_bij, Rasterizer
 		bdata.use_large_verts = true;
 		bdata.fvf = RasterizerStorageCommon::FVF_LARGE;
 	}
+
+	// make sure the jointed item flags state is up to date, as it is read indirectly in
+	// a couple of places from the state rather than from the joined item.
+	// we could alternatively make sure to only read directly from the joined item
+	// during the render, but it is probably more bug future proof to make sure both
+	// are up to date.
+	bdata.joined_item_batch_flags = p_bij.flags;
 
 	// in the special case of custom shaders that read from VERTEX (i.e. vertex position)
 	// we want to disable software transform of extra matrix
@@ -2548,6 +2599,20 @@ PREAMBLE(void)::render_joined_item_commands(const BItemJoined &p_bij, Rasterizer
 		// ONCE OFF fill state setup, that will be retained over multiple calls to
 		// prefill_joined_item()
 		fill_state.transform_combined = item->final_transform;
+
+		// calculate skeleton base inverse transform if required for software skinning
+		// put in the fill state as this is readily accessible from the software skinner
+		if (item->skeleton.is_valid() && bdata.settings_use_software_skinning && get_storage()->skeleton_owner.owns(item->skeleton)) {
+			typename T_STORAGE::Skeleton *skeleton = nullptr;
+			skeleton = get_storage()->skeleton_owner.get(item->skeleton);
+
+			if (skeleton->use_2d) {
+				// with software skinning we still need to know the skeleton inverse transform, the other two aren't needed
+				// but are left in for simplicity here
+				Transform2D skeleton_transform = p_ris.item_group_base_transform * skeleton->base_transform_2d;
+				fill_state.skeleton_base_inverse_xform = skeleton_transform.affine_inverse();
+			}
+		}
 
 		// decide the initial transform mode, and make a backup
 		// in orig_transform_mode in case we need to switch back
@@ -2952,10 +3017,9 @@ void C_PREAMBLE::_translate_batches_to_larger_FVF(uint32_t p_sequence_batch_type
 						needs_new_batch = false;
 
 						// create the colored verts (only if not default)
-						//int first_vert = source_batch.first_quad * 4;
-						//int end_vert = 4 * (source_batch.first_quad + source_batch.num_commands);
 						int first_vert = source_batch.first_vert;
-						int end_vert = first_vert + (4 * source_batch.num_commands);
+						int num_verts = source_batch.get_num_verts();
+						int end_vert = first_vert + num_verts;
 
 						for (int v = first_vert; v < end_vert; v++) {
 							RAST_DEV_DEBUG_ASSERT(bdata.vertices.size());
@@ -3012,10 +3076,10 @@ void C_PREAMBLE::_translate_batches_to_larger_FVF(uint32_t p_sequence_batch_type
 
 			// create the colored verts (only if not default)
 			if (source_batch.type != RasterizerStorageCommon::BT_DEFAULT) {
-				//					int first_vert = source_batch.first_quad * 4;
-				//					int end_vert = 4 * (source_batch.first_quad + source_batch.num_commands);
+
 				int first_vert = source_batch.first_vert;
-				int end_vert = first_vert + (4 * source_batch.num_commands);
+				int num_verts = source_batch.get_num_verts();
+				int end_vert = first_vert + num_verts;
 
 				for (int v = first_vert; v < end_vert; v++) {
 					RAST_DEV_DEBUG_ASSERT(bdata.vertices.size());

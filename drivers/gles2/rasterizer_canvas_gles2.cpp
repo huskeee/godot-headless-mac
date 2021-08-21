@@ -32,6 +32,7 @@
 
 #include "core/os/os.h"
 #include "core/project_settings.h"
+#include "drivers/gles2/rasterizer_gles2.h"
 #include "drivers/gles_common/rasterizer_asserts.h"
 #include "rasterizer_scene_gles2.h"
 #include "servers/visual/visual_server_raster.h"
@@ -2194,7 +2195,7 @@ void RasterizerCanvasGLES2::render_joined_item(const BItemJoined &p_bij, RenderI
 	_set_uniforms();
 
 	if (unshaded || (state.uniforms.final_modulate.a > 0.001 && (!r_ris.shader_cache || r_ris.shader_cache->canvas_item.light_mode != RasterizerStorageGLES2::Shader::CanvasItem::LIGHT_MODE_LIGHT_ONLY) && !ci->light_masked))
-		render_joined_item_commands(p_bij, NULL, reclip, material_ptr, false);
+		render_joined_item_commands(p_bij, NULL, reclip, material_ptr, false, r_ris);
 
 	r_ris.rebind_shader = true; // hacked in for now.
 
@@ -2288,10 +2289,10 @@ void RasterizerCanvasGLES2::render_joined_item(const BItemJoined &p_bij, RenderI
 				// this can greatly reduce fill rate ..
 				// at the cost of glScissor commands, so is optional
 				if (!bdata.settings_scissor_lights || r_ris.current_clip) {
-					render_joined_item_commands(p_bij, NULL, reclip, material_ptr, true);
+					render_joined_item_commands(p_bij, NULL, reclip, material_ptr, true, r_ris);
 				} else {
 					bool scissor = _light_scissor_begin(p_bij.bounding_rect, light->xform_cache, light->rect_cache);
-					render_joined_item_commands(p_bij, NULL, reclip, material_ptr, true);
+					render_joined_item_commands(p_bij, NULL, reclip, material_ptr, true, r_ris);
 					if (scissor) {
 						glDisable(GL_SCISSOR_TEST);
 					}
@@ -2363,6 +2364,7 @@ void RasterizerCanvasGLES2::gl_disable_scissor() const {
 }
 
 void RasterizerCanvasGLES2::initialize() {
+	RasterizerGLES2::gl_check_errors();
 	RasterizerCanvasBaseGLES2::initialize();
 
 	batch_initialize();
@@ -2402,6 +2404,7 @@ void RasterizerCanvasGLES2::initialize() {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	} // only if there is a vertex buffer (batching is on)
+	RasterizerGLES2::gl_check_errors();
 }
 
 RasterizerCanvasGLES2::RasterizerCanvasGLES2() {

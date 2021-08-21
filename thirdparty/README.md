@@ -19,14 +19,9 @@ Files extracted from upstream source:
 
 ## certs
 
-- Upstream: Mozilla, via https://apps.fedoraproject.org/packages/ca-certificates
-- Version: 2018.2.26 (2018)
+- Upstream: Mozilla, via https://github.com/bagder/ca-bundle
+- Version: git (8b263a18fca98ea371e54227837321c5cdaa1ba7, 2021)
 - License: MPL 2.0
-
-File extracted from a recent Fedora install:
-/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
-(It can't be extracted directly from the package,
-as it's generated on the user's system.)
 
 
 ## cvtt
@@ -41,19 +36,19 @@ Files extracted from upstream source:
 
 ## embree
 
-- Upstream: https://github.com/embree/embree
-- Version: 3.12.1 (69bd4c272f1ed608494f233ecfff3feec516880b, 2020)
+- Upstream: https://github.com/lighttransport/embree-aarch64
+- Version: 3.12.1 (6ef362f99af80c9dfe8dd2bfc582d9067897edc6, 2020)
 - License: Apache 2.0
 
 Files extracted from upstream:
 
-- All cpp files listed in `modules/raytrace/godot_update_embree.py`
-- All header files in the directories listed in `modules/raytrace/godot_update_embree.py`
+- All cpp files listed in `modules/raycast/godot_update_embree.py`
+- All header files in the directories listed in `modules/raycast/godot_update_embree.py`
 
-The `modules/raytrace/godot_update_embree.py`script can be used to pull the 
-relevant files from the latest Embree release and apply some automatic changes.
+The `modules/raycast/godot_update_embree.py`script can be used to pull the 
+relevant files from the latest Embree-aarch64 release and apply some automatic changes.
 
-Some minor changes have been made in order to fix build errors.
+Some changes have been made in order to remove exceptions and fix minor build errors.
 They are marked with `// -- GODOT start --` and `// -- GODOT end --`
 comments. Apply the patches in the `patches/` folder when syncing on newer upstream
 commits.
@@ -264,21 +259,21 @@ changes are marked with `// -- GODOT --` comments.
 ## mbedtls
 
 - Upstream: https://tls.mbed.org/
-- Version: 2.16.10 (d61fa61bef06b64132e3490543c81b8ee40fbee3, 2021)
+- Version: 2.16.11 (aa1d4e097342af799ba80dfb13640efef498227c, 2021)
 - License: Apache 2.0
 
 File extracted from upstream release tarball:
 
-- All `*.h` from `include/mbedtls/` to `thirdparty/mbedtls/include/mbedtls/`
-- All `*.c` from `library/` to `thirdparty/mbedtls/library/`
-- LICENSE and apache-2.0.txt files
-- Applied the patch in `thirdparty/mbedtls/patches/1453.diff` (PR 1453).
-  Soon to be merged upstream. Check it out at next update.
+- All `*.h` from `include/mbedtls/` to `thirdparty/mbedtls/include/mbedtls/`.
+- All `*.c` from `library/` to `thirdparty/mbedtls/library/`.
+- `LICENSE` and `apache-2.0.txt` files.
+- Applied the patch in `thirdparty/mbedtls/patches/1453.diff` (upstream PR:
+  https://github.com/ARMmbed/mbedtls/pull/1453).
 - Applied the patch in `thirdparty/mbedtls/patches/padlock.diff`. This disables
   VIA padlock support which defines a symbol `unsupported` which clashes with
   a pre-defined symbol.
-- Added 2 files `godot_core_mbedtls_platform.{c,h}` providing configuration
-  for light bundling with core.
+- Added 2 files `godot_core_mbedtls_platform.c` and `godot_core_mbedtls_config.h`
+  providing configuration for light bundling with core.
 
 
 ## miniupnpc

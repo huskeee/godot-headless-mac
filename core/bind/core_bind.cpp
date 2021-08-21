@@ -815,7 +815,7 @@ int64_t _OS::get_unix_time_from_datetime(Dictionary datetime) const {
 	unsigned int hour = ((datetime.has(HOUR_KEY)) ? static_cast<unsigned int>(datetime[HOUR_KEY]) : 0);
 	unsigned int day = ((datetime.has(DAY_KEY)) ? static_cast<unsigned int>(datetime[DAY_KEY]) : 1);
 	unsigned int month = ((datetime.has(MONTH_KEY)) ? static_cast<unsigned int>(datetime[MONTH_KEY]) : 1);
-	unsigned int year = ((datetime.has(YEAR_KEY)) ? static_cast<unsigned int>(datetime[YEAR_KEY]) : 0);
+	unsigned int year = ((datetime.has(YEAR_KEY)) ? static_cast<unsigned int>(datetime[YEAR_KEY]) : 1970);
 
 	/// How many days come before each month (0-12)
 	static const unsigned short int DAYS_PAST_THIS_YEAR_TABLE[2][13] = {
@@ -826,15 +826,14 @@ int64_t _OS::get_unix_time_from_datetime(Dictionary datetime) const {
 	};
 
 	ERR_FAIL_COND_V_MSG(second > 59, 0, "Invalid second value of: " + itos(second) + ".");
-
 	ERR_FAIL_COND_V_MSG(minute > 59, 0, "Invalid minute value of: " + itos(minute) + ".");
-
 	ERR_FAIL_COND_V_MSG(hour > 23, 0, "Invalid hour value of: " + itos(hour) + ".");
-
+	ERR_FAIL_COND_V_MSG(year == 0, 0, "Years before 1 AD are not supported. Value passed: " + itos(year) + ".");
 	ERR_FAIL_COND_V_MSG(month > 12 || month == 0, 0, "Invalid month value of: " + itos(month) + ".");
-
 	// Do this check after month is tested as valid
-	ERR_FAIL_COND_V_MSG(day > MONTH_DAYS_TABLE[LEAPYEAR(year)][month - 1] || day == 0, 0, "Invalid day value of '" + itos(day) + "' which is larger than '" + itos(MONTH_DAYS_TABLE[LEAPYEAR(year)][month - 1]) + "' or 0.");
+	unsigned int days_in_month = MONTH_DAYS_TABLE[LEAPYEAR(year)][month - 1];
+	ERR_FAIL_COND_V_MSG(day == 0 || day > days_in_month, 0, "Invalid day value of: " + itos(day) + ". It should be comprised between 1 and " + itos(days_in_month) + " for month " + itos(month) + ".");
+
 	// Calculate all the seconds from months past in this year
 	uint64_t SECONDS_FROM_MONTHS_PAST_THIS_YEAR = DAYS_PAST_THIS_YEAR_TABLE[LEAPYEAR(year)][month - 1] * SECONDS_PER_DAY;
 
@@ -1192,9 +1191,8 @@ bool _OS::is_keep_screen_on() const {
 	return OS::get_singleton()->is_keep_screen_on();
 }
 
-String _OS::get_system_dir(SystemDir p_dir) const {
-
-	return OS::get_singleton()->get_system_dir(OS::SystemDir(p_dir));
+String _OS::get_system_dir(SystemDir p_dir, bool p_shared_storage) const {
+	return OS::get_singleton()->get_system_dir(OS::SystemDir(p_dir), p_shared_storage);
 }
 
 String _OS::get_scancode_string(uint32_t p_code) const {
@@ -1411,7 +1409,7 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_dynamic_memory_usage"), &_OS::get_dynamic_memory_usage);
 
 	ClassDB::bind_method(D_METHOD("get_user_data_dir"), &_OS::get_user_data_dir);
-	ClassDB::bind_method(D_METHOD("get_system_dir", "dir"), &_OS::get_system_dir);
+	ClassDB::bind_method(D_METHOD("get_system_dir", "dir", "shared_storage"), &_OS::get_system_dir, DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("get_unique_id"), &_OS::get_unique_id);
 
 	ClassDB::bind_method(D_METHOD("is_ok_left_and_cancel_right"), &_OS::is_ok_left_and_cancel_right);
@@ -2534,15 +2532,17 @@ Error _Directory::copy(String p_from, String p_to) {
 Error _Directory::rename(String p_from, String p_to) {
 
 	ERR_FAIL_COND_V_MSG(!d, ERR_UNCONFIGURED, "Directory must be opened before use.");
+	ERR_FAIL_COND_V_MSG(p_from.empty() || p_from == "." || p_from == "..", ERR_INVALID_PARAMETER, "Invalid path to rename.");
+
 	if (!p_from.is_rel_path()) {
 		DirAccess *d = DirAccess::create_for_path(p_from);
-		ERR_FAIL_COND_V_MSG(!d->file_exists(p_from), ERR_DOES_NOT_EXIST, "File does not exist.");
+		ERR_FAIL_COND_V_MSG(!d->file_exists(p_from) && !d->dir_exists(p_from), ERR_DOES_NOT_EXIST, "File or directory does not exist.");
 		Error err = d->rename(p_from, p_to);
 		memdelete(d);
 		return err;
 	}
 
-	ERR_FAIL_COND_V_MSG(!d->file_exists(p_from), ERR_DOES_NOT_EXIST, "File does not exist.");
+	ERR_FAIL_COND_V_MSG(!d->file_exists(p_from) && !d->dir_exists(p_from), ERR_DOES_NOT_EXIST, "File or directory does not exist.");
 	return d->rename(p_from, p_to);
 }
 Error _Directory::remove(String p_name) {

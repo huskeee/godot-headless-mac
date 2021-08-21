@@ -70,7 +70,6 @@ import android.os.Looper;
 import android.os.Messenger;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
-import android.provider.Settings.Secure;
 import android.view.Display;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -603,7 +602,6 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 
 		final Activity activity = getActivity();
 		io = new GodotIO(activity);
-		io.unique_id = Secure.getString(activity.getContentResolver(), Secure.ANDROID_ID);
 		GodotLib.io = io;
 		netUtils = new GodotNetUtils(activity);
 		mSensorManager = (SensorManager)activity.getSystemService(Context.SENSOR_SERVICE);
@@ -797,8 +795,6 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 
 		super.onDestroy();
 
-		// TODO: This is a temp solution. The proper fix will involve tracking down and properly shutting down each
-		// native Godot components that is started in Godot#onVideoInit.
 		forceQuit();
 	}
 
@@ -1009,7 +1005,11 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 	}
 
 	private void forceQuit() {
-		System.exit(0);
+		// TODO: This is a temp solution. The proper fix will involve tracking down and properly shutting down each
+		// native Godot components that is started in Godot#onVideoInit.
+		if (godotHost != null) {
+			godotHost.onGodotForceQuit(this);
+		}
 	}
 
 	private boolean obbIsCorrupted(String f, String main_pack_md5) {

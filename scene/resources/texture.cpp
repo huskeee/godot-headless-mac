@@ -1694,7 +1694,7 @@ void CurveTexture::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_update"), &CurveTexture::_update);
 
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "width", PROPERTY_HINT_RANGE, "32,4096"), "set_width", "get_width");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "width", PROPERTY_HINT_RANGE, "1,4096"), "set_width", "get_width");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "curve", PROPERTY_HINT_RESOURCE_TYPE, "Curve"), "set_curve", "get_curve");
 }
 
@@ -1814,7 +1814,7 @@ void GradientTexture::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_update"), &GradientTexture::_update);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "gradient", PROPERTY_HINT_RESOURCE_TYPE, "Gradient"), "set_gradient", "get_gradient");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "width", PROPERTY_HINT_RANGE, "1,2048,1,or_greater"), "set_width", "get_width");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "width", PROPERTY_HINT_RANGE, "1,4096"), "set_width", "get_width");
 }
 
 void GradientTexture::set_gradient(Ref<Gradient> p_gradient) {
@@ -2726,15 +2726,14 @@ void ExternalTexture::set_flags(uint32_t p_flags) {
 }
 
 uint32_t ExternalTexture::get_flags() const {
-	// not supported
-	return 0;
+	return Texture::FLAG_VIDEO_SURFACE;
 }
 
 ExternalTexture::ExternalTexture() {
 	size = Size2(1.0, 1.0);
 	texture = VisualServer::get_singleton()->texture_create();
 
-	VisualServer::get_singleton()->texture_allocate(texture, size.width, size.height, 0, Image::FORMAT_RGBA8, VS::TEXTURE_TYPE_EXTERNAL, 0);
+	VisualServer::get_singleton()->texture_allocate(texture, size.width, size.height, 0, Image::FORMAT_RGBA8, VS::TEXTURE_TYPE_EXTERNAL, Texture::FLAG_VIDEO_SURFACE);
 	_change_notify();
 	emit_changed();
 }

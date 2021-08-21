@@ -357,7 +357,9 @@ Error OS_X11::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 
 	if (gl_initialization_error) {
 		OS::get_singleton()->alert("Your video card driver does not support any of the supported OpenGL versions.\n"
-								   "Please update your drivers or if you have a very old or integrated GPU upgrade it.",
+								   "Please update your drivers or if you have a very old or integrated GPU, upgrade it.\n"
+								   "Alternatively, you can force software rendering by running Godot with the `LIBGL_ALWAYS_SOFTWARE=1`\n"
+								   "environment variable set, but this will be very slow.",
 				"Unable to initialize Video driver");
 		return ERR_UNAVAILABLE;
 	}
@@ -3235,8 +3237,7 @@ String OS_X11::get_cache_path() const {
 	}
 }
 
-String OS_X11::get_system_dir(SystemDir p_dir) const {
-
+String OS_X11::get_system_dir(SystemDir p_dir, bool p_shared_storage) const {
 	String xdgparam;
 
 	switch (p_dir) {

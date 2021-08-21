@@ -30,6 +30,7 @@
 
 #include "rasterizer_canvas_gles3.h"
 
+#include "drivers/gles3/rasterizer_gles3.h"
 #include "drivers/gles_common/rasterizer_asserts.h"
 #include "servers/visual/visual_server_raster.h"
 
@@ -63,11 +64,6 @@ void RasterizerCanvasGLES3::canvas_render_items_end() {
 
 void RasterizerCanvasGLES3::canvas_render_items(Item *p_item_list, int p_z, const Color &p_modulate, Light *p_light, const Transform2D &p_base_transform) {
 	batch_canvas_render_items(p_item_list, p_z, p_modulate, p_light, p_base_transform);
-}
-
-void RasterizerCanvasGLES3::gl_checkerror() {
-	GLenum e = glGetError();
-	CRASH_COND(e != GL_NO_ERROR);
 }
 
 void RasterizerCanvasGLES3::gl_enable_scissor(int p_x, int p_y, int p_width, int p_height) const {
@@ -1485,7 +1481,7 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 	}
 	if (unshaded || (state.canvas_item_modulate.a > 0.001 && (!r_ris.shader_cache || r_ris.shader_cache->canvas_item.light_mode != RasterizerStorageGLES3::Shader::CanvasItem::LIGHT_MODE_LIGHT_ONLY) && !p_ci->light_masked)) {
 		RasterizerStorageGLES3::Material *material_ptr = nullptr;
-		render_joined_item_commands(p_bij, NULL, reclip, material_ptr, false);
+		render_joined_item_commands(p_bij, NULL, reclip, material_ptr, false, r_ris);
 	}
 
 	if ((blend_mode == RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_MIX || blend_mode == RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_PMALPHA) && r_ris.item_group_light && !unshaded) {
@@ -1493,7 +1489,11 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 		Light *light = r_ris.item_group_light;
 		bool light_used = false;
 		VS::CanvasLightMode mode = VS::CANVAS_LIGHT_MODE_ADD;
-		state.canvas_item_modulate = p_ci->final_modulate; // remove the canvas modulate
+
+		// we leave this set to 1, 1, 1, 1 if using software because the colors are baked into the vertices
+		if (p_bij.is_single_item()) {
+			state.canvas_item_modulate = p_ci->final_modulate; // remove the canvas modulate
+		}
 
 		while (light) {
 
@@ -1596,10 +1596,10 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 				// this can greatly reduce fill rate ..
 				// at the cost of glScissor commands, so is optional
 				if (!bdata.settings_scissor_lights || r_ris.current_clip) {
-					render_joined_item_commands(p_bij, NULL, reclip, nullptr, true);
+					render_joined_item_commands(p_bij, NULL, reclip, nullptr, true, r_ris);
 				} else {
 					bool scissor = _light_scissor_begin(p_bij.bounding_rect, light->xform_cache, light->rect_cache);
-					render_joined_item_commands(p_bij, NULL, reclip, nullptr, true);
+					render_joined_item_commands(p_bij, NULL, reclip, nullptr, true, r_ris);
 					if (scissor) {
 						glDisable(GL_SCISSOR_TEST);
 					}
@@ -2198,8 +2198,6 @@ void RasterizerCanvasGLES3::_batch_render_generic(const Batch &p_batch, Rasteriz
 
 	glBindVertexArray(0);
 
-	//	gl_checkerror();
-
 	switch (tex.tile_mode) {
 		case BatchTex::TILE_NORMAL: {
 			// if the texture is imported as tiled, no need to revert GL state
@@ -2220,7 +2218,7 @@ void RasterizerCanvasGLES3::_batch_render_generic(const Batch &p_batch, Rasteriz
 }
 
 void RasterizerCanvasGLES3::initialize() {
-	gl_checkerror();
+	RasterizerGLES3::gl_check_errors();
 	RasterizerCanvasBaseGLES3::initialize();
 
 	batch_initialize();
@@ -2352,7 +2350,7 @@ void RasterizerCanvasGLES3::initialize() {
 		state.canvas_shader.add_custom_define("#define USE_NINEPATCH_SCALING\n");
 	}
 
-	gl_checkerror();
+	RasterizerGLES3::gl_check_errors();
 }
 
 RasterizerCanvasGLES3::RasterizerCanvasGLES3() {

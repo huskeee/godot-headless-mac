@@ -345,7 +345,7 @@ Ref<Script> CSharpLanguage::get_template(const String &p_class_name, const Strin
 							 "}\n";
 
 	// Replaces all spaces in p_class_name with underscores to prevent
-	// erronous C# Script templates from being generated when the object name
+	// invalid C# Script templates from being generated when the object name
 	// has spaces in it.
 	String class_name_no_spaces = p_class_name.replace(" ", "_");
 	String base_class_name = get_base_class_name(p_base_class_name, class_name_no_spaces);
@@ -2275,8 +2275,7 @@ void CSharpScript::_update_member_info_no_exports() {
 }
 #endif
 
-bool CSharpScript::_update_exports() {
-
+bool CSharpScript::_update_exports(PlaceHolderScriptInstance *p_instance_to_update) {
 #ifdef TOOLS_ENABLED
 	bool is_editor = Engine::get_singleton()->is_editor_hint();
 	if (is_editor)
@@ -2447,14 +2446,18 @@ bool CSharpScript::_update_exports() {
 	if (is_editor) {
 		placeholder_fallback_enabled = false;
 
-		if (placeholders.size()) {
+		if ((changed || p_instance_to_update) && placeholders.size()) {
 			// Update placeholders if any
 			Map<StringName, Variant> values;
 			List<PropertyInfo> propnames;
 			_update_exports_values(values, propnames);
 
-			for (Set<PlaceHolderScriptInstance *>::Element *E = placeholders.front(); E; E = E->next()) {
-				E->get()->update(propnames, values);
+			if (changed) {
+				for (Set<PlaceHolderScriptInstance *>::Element *E = placeholders.front(); E; E = E->next()) {
+					E->get()->update(propnames, values);
+				}
+			} else {
+				p_instance_to_update->update(propnames, values);
 			}
 		}
 	}
@@ -3071,7 +3074,7 @@ PlaceHolderScriptInstance *CSharpScript::placeholder_instance_create(Object *p_t
 #ifdef TOOLS_ENABLED
 	PlaceHolderScriptInstance *si = memnew(PlaceHolderScriptInstance(CSharpLanguage::get_singleton(), Ref<Script>(this), p_this));
 	placeholders.insert(si);
-	_update_exports();
+	_update_exports(si);
 	return si;
 #else
 	return NULL;

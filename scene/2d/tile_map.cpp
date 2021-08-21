@@ -346,10 +346,17 @@ void TileMap::update_dirty_quadrants() {
 	Color debug_collision_color;
 	Color debug_navigation_color;
 
-	bool debug_shapes = show_collision && (Engine::get_singleton()->is_editor_hint() || (st && st->is_debugging_collisions_hint()));
+	bool debug_shapes = false;
+	if (st) {
+		if (Engine::get_singleton()->is_editor_hint()) {
+			debug_shapes = show_collision;
+		} else {
+			debug_shapes = st->is_debugging_collisions_hint();
+		}
 
-	if (debug_shapes) {
-		debug_collision_color = st->get_debug_collisions_color();
+		if (debug_shapes) {
+			debug_collision_color = st->get_debug_collisions_color();
+		}
 	}
 
 	bool debug_navigation = st && st->is_debugging_navigation_hint();
@@ -411,8 +418,7 @@ void TileMap::update_dirty_quadrants() {
 			Ref<ShaderMaterial> mat = tile_set->tile_get_material(c.id);
 			int z_index = tile_set->tile_get_z_index(c.id);
 
-			if (tile_set->tile_get_tile_mode(c.id) == TileSet::AUTO_TILE ||
-					tile_set->tile_get_tile_mode(c.id) == TileSet::ATLAS_TILE) {
+			if (tile_set->tile_get_tile_mode(c.id) == TileSet::AUTO_TILE || tile_set->tile_get_tile_mode(c.id) == TileSet::ATLAS_TILE) {
 				z_index += tile_set->autotile_get_z_index(c.id, Vector2(c.autotile_coord_x, c.autotile_coord_y));
 			}
 
@@ -958,6 +964,9 @@ void TileMap::update_cell_bitmask(int p_x, int p_y) {
 	Map<PosKey, Cell>::Element *E = tile_map.find(p);
 	if (E != NULL) {
 		int id = get_cell(p_x, p_y);
+		if (!tile_set->has_tile(id)) {
+			return;
+		}
 		if (tile_set->tile_get_tile_mode(id) == TileSet::AUTO_TILE) {
 			uint16_t mask = 0;
 			if (tile_set->autotile_get_bitmask_mode(id) == TileSet::BITMASK_2X2) {
@@ -1210,6 +1219,7 @@ void TileMap::_set_tile_data(const PoolVector<int> &p_data) {
 	PoolVector<int>::Read r = p_data.read();
 
 	int offset = (format == FORMAT_2) ? 3 : 2;
+	ERR_FAIL_COND_MSG(c % offset != 0, "Corrupted tile data.");
 
 	clear();
 	for (int i = 0; i < c; i += offset) {

@@ -63,6 +63,9 @@ void BodySW::update_inertias() {
 			real_t total_area = 0;
 
 			for (int i = 0; i < get_shape_count(); i++) {
+				if (is_shape_disabled(i)) {
+					continue;
+				}
 
 				total_area += get_shape_area(i);
 			}
@@ -70,16 +73,22 @@ void BodySW::update_inertias() {
 			// We have to recompute the center of mass.
 			center_of_mass_local.zero();
 
-			for (int i = 0; i < get_shape_count(); i++) {
-				real_t area = get_shape_area(i);
+			if (total_area != 0.0) {
+				for (int i = 0; i < get_shape_count(); i++) {
+					if (is_shape_disabled(i)) {
+						continue;
+					}
 
-				real_t mass = area * this->mass / total_area;
+					real_t area = get_shape_area(i);
 
-				// NOTE: we assume that the shape origin is also its center of mass.
-				center_of_mass_local += mass * get_shape_transform(i).origin;
+					real_t mass = area * this->mass / total_area;
+
+					// NOTE: we assume that the shape origin is also its center of mass.
+					center_of_mass_local += mass * get_shape_transform(i).origin;
+				}
+
+				center_of_mass_local /= mass;
 			}
-
-			center_of_mass_local /= mass;
 
 			// Recompute the inertia tensor.
 			Basis inertia_tensor;
@@ -92,11 +101,14 @@ void BodySW::update_inertias() {
 					continue;
 				}
 
+				real_t area = get_shape_area(i);
+				if (area == 0.0) {
+					continue;
+				}
+
 				inertia_set = true;
 
 				const ShapeSW *shape = get_shape(i);
-
-				real_t area = get_shape_area(i);
 
 				real_t mass = area * this->mass / total_area;
 
@@ -617,7 +629,7 @@ void BodySW::integrate_velocities(real_t p_step) {
 	real_t ang_vel = total_angular_velocity.length();
 	Transform transform = get_transform();
 
-	if (ang_vel != 0.0) {
+	if (!Math::is_zero_approx(ang_vel)) {
 		Vector3 ang_vel_axis = total_angular_velocity / ang_vel;
 		Basis rot(ang_vel_axis, ang_vel * p_step);
 		Basis identity3(1, 0, 0, 0, 1, 0, 0, 0, 1);

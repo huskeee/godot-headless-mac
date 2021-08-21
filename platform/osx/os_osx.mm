@@ -328,6 +328,9 @@ static NSCursor *cursorFromSelector(SEL selector, SEL fallback = nil) {
 
 	if (!OS_OSX::singleton->resizable)
 		[OS_OSX::singleton->window_object setStyleMask:[OS_OSX::singleton->window_object styleMask] & ~NSWindowStyleMaskResizable];
+
+	if (OS_OSX::singleton->on_top)
+		[OS_OSX::singleton->window_object setLevel:NSFloatingWindowLevel];
 }
 
 - (void)windowDidChangeBackingProperties:(NSNotification *)notification {
@@ -1713,7 +1716,7 @@ Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 	}
 
 	on_top = p_desired.always_on_top;
-	if (p_desired.always_on_top) {
+	if (p_desired.always_on_top && !p_desired.fullscreen) {
 		[window_object setLevel:NSFloatingWindowLevel];
 	}
 
@@ -1760,7 +1763,7 @@ Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 
 	if (gl_initialization_error) {
 		OS::get_singleton()->alert("Your video card driver does not support any of the supported OpenGL versions.\n"
-								   "Please update your drivers or if you have a very old or integrated GPU upgrade it.",
+								   "Please update your drivers or if you have a very old or integrated GPU, upgrade it.",
 				"Unable to initialize Video driver");
 		return ERR_UNAVAILABLE;
 	}
@@ -2294,8 +2297,7 @@ String OS_OSX::get_godot_dir_name() const {
 	return String(VERSION_SHORT_NAME).capitalize();
 }
 
-String OS_OSX::get_system_dir(SystemDir p_dir) const {
-
+String OS_OSX::get_system_dir(SystemDir p_dir, bool p_shared_storage) const {
 	NSSearchPathDirectory id;
 	bool found = true;
 
@@ -2561,7 +2563,7 @@ void OS_OSX::_update_window() {
 		[window_object setHidesOnDeactivate:YES];
 	} else {
 		// Reset these when our window is not a borderless window that covers up the screen
-		if (on_top) {
+		if (on_top & !zoomed) {
 			[window_object setLevel:NSFloatingWindowLevel];
 		} else {
 			[window_object setLevel:NSNormalWindowLevel];
@@ -2739,6 +2741,7 @@ void OS_OSX::set_window_fullscreen(bool p_enabled) {
 	}
 
 	if (zoomed != p_enabled) {
+		[window_object setLevel:NSNormalWindowLevel];
 		if (layered_window)
 			set_window_per_pixel_transparency_enabled(false);
 		if (!resizable)
@@ -2840,6 +2843,9 @@ void OS_OSX::set_window_always_on_top(bool p_enabled) {
 
 	on_top = p_enabled;
 
+	if (zoomed)
+		return;
+
 	if (is_window_always_on_top() == p_enabled)
 		return;
 
@@ -2850,7 +2856,11 @@ void OS_OSX::set_window_always_on_top(bool p_enabled) {
 }
 
 bool OS_OSX::is_window_always_on_top() const {
-	return [window_object level] == NSFloatingWindowLevel;
+	if (zoomed) {
+		return on_top;
+	} else {
+		return [window_object level] == NSFloatingWindowLevel;
+	}
 }
 
 bool OS_OSX::is_window_focused() const {
@@ -3316,6 +3326,12 @@ void OS_OSX::set_mouse_mode(MouseMode p_mode) {
 	ignore_warp = true;
 	warp_events.clear();
 	mouse_mode = p_mode;
+
+	if (mouse_mode == MOUSE_MODE_VISIBLE || mouse_mode == MOUSE_MODE_CONFINED) {
+		CursorShape p_shape = cursor_shape;
+		cursor_shape = OS::CURSOR_MAX;
+		set_cursor_shape(p_shape);
+	}
 }
 
 OS::MouseMode OS_OSX::get_mouse_mode() const {

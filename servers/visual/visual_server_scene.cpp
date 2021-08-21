@@ -784,7 +784,7 @@ void VisualServerScene::instance_set_visible(RID p_instance, bool p_visible) {
 
 	instance->visible = p_visible;
 
-	// give the opportunity for the spatial paritioning scene to use a special implementation of visibility
+	// give the opportunity for the spatial partitioning scene to use a special implementation of visibility
 	// for efficiency (supported in BVH but not octree)
 
 	// slightly bug prone optimization here - we want to avoid doing a collision check twice
@@ -2189,9 +2189,6 @@ void VisualServerScene::_prepare_scene(const Transform p_cam_transform, const Ca
 
 				geom->gi_probes_dirty = false;
 			}
-
-			ins->depth = near_plane.distance_to(ins->transform.origin);
-			ins->depth_layer = CLAMP(int(ins->depth * 16 / z_far), 0, 15);
 		}
 
 		if (!keep) {
@@ -2344,6 +2341,17 @@ void VisualServerScene::_prepare_scene(const Transform p_cam_transform, const Ca
 				//must redraw!
 				light->shadow_dirty = _light_instance_update_shadow(ins, p_cam_transform, p_cam_projection, p_cam_orthogonal, p_shadow_atlas, scenario);
 			}
+		}
+	}
+
+	// Calculate instance->depth from the camera, after shadow calculation has stopped overwriting instance->depth
+	for (int i = 0; i < instance_cull_count; i++) {
+		Instance *ins = instance_cull_result[i];
+
+		if (((1 << ins->base_type) & VS::INSTANCE_GEOMETRY_MASK) && ins->visible && ins->cast_shadows != VS::SHADOW_CASTING_SETTING_SHADOWS_ONLY) {
+			Vector3 aabb_center = ins->transformed_aabb.position + (ins->transformed_aabb.size * 0.5);
+			ins->depth = near_plane.distance_to(aabb_center);
+			ins->depth_layer = CLAMP(int(ins->depth * 16 / z_far), 0, 15);
 		}
 	}
 }

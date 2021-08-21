@@ -911,7 +911,7 @@ void CSGMesh::set_mesh(const Ref<Mesh> &p_mesh) {
 		mesh->connect("changed", this, "_mesh_changed");
 	}
 
-	_make_dirty();
+	_mesh_changed();
 }
 
 Ref<Mesh> CSGMesh::get_mesh() {
@@ -1832,7 +1832,6 @@ CSGBrush *CSGPolygon::_build_brush() {
 
 			path_cache->connect("tree_exited", this, "_path_exited");
 			path_cache->connect("curve_changed", this, "_path_changed");
-			path_cache = NULL;
 		}
 		curve = path->get_curve();
 		if (curve.is_null()) {

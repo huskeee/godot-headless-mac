@@ -426,10 +426,6 @@ msgid "Animation tracks can only point to AnimationPlayer nodes."
 msgstr ""
 
 #: editor/animation_track_editor.cpp
-msgid "An animation player can't animate itself, only other players."
-msgstr ""
-
-#: editor/animation_track_editor.cpp
 msgid "Not possible to add a new track without a root"
 msgstr ""
 
@@ -478,7 +474,8 @@ msgid "Anim Move Keys"
 msgstr "Færa lykla af Anim"
 
 #: editor/animation_track_editor.cpp
-msgid "Clipboard is empty"
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Clipboard is empty!"
 msgstr ""
 
 #: editor/animation_track_editor.cpp
@@ -1116,6 +1113,10 @@ msgstr ""
 
 #: editor/editor_about.cpp
 msgid "Thanks from the Godot community!"
+msgstr ""
+
+#: editor/editor_about.cpp editor/editor_node.cpp editor/project_manager.cpp
+msgid "Click to copy."
 msgstr ""
 
 #: editor/editor_about.cpp
@@ -2445,7 +2446,7 @@ msgid "Save changes to the following scene(s) before quitting?"
 msgstr ""
 
 #: editor/editor_node.cpp
-msgid "Save changes the following scene(s) before opening Project Manager?"
+msgid "Save changes to the following scene(s) before opening Project Manager?"
 msgstr ""
 "Vista breytingar á neðangreindum senu(m) áður en Verkefna Stjóri er opnaður?"
 
@@ -2481,8 +2482,9 @@ msgstr ""
 
 #: editor/editor_node.cpp
 msgid ""
-"Unable to load addon script from path: '%s' There seems to be an error in "
-"the code, please check the syntax."
+"Unable to load addon script from path: '%s'. This might be due to a code "
+"error in that script.\n"
+"Disabling the addon at '%s' to prevent further errors."
 msgstr ""
 
 #: editor/editor_node.cpp
@@ -2887,6 +2889,10 @@ msgstr ""
 
 #: editor/editor_node.cpp
 msgid "About"
+msgstr ""
+
+#: editor/editor_node.cpp
+msgid "Support Godot Development"
 msgstr ""
 
 #: editor/editor_node.cpp
@@ -5045,8 +5051,8 @@ msgstr ""
 
 #: editor/plugins/baked_lightmap_editor_plugin.cpp
 msgid ""
-"No meshes to bake. Make sure they contain an UV2 channel and that the 'Bake "
-"Light' flag is on."
+"No meshes to bake. Make sure they contain an UV2 channel and that the 'Use "
+"In Baked Light' and 'Generate Lightmap' flags are on."
 msgstr ""
 
 #: editor/plugins/baked_lightmap_editor_plugin.cpp
@@ -7138,6 +7144,26 @@ msgid "View Plane Transform."
 msgstr ""
 
 #: editor/plugins/spatial_editor_plugin.cpp
+#: editor/plugins/texture_region_editor_plugin.cpp
+#: scene/resources/visual_shader.cpp
+msgid "None"
+msgstr ""
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Rotate"
+msgstr ""
+
+#. TRANSLATORS: This refers to the movement that changes the position of an object.
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Translate"
+msgstr ""
+
+#: editor/plugins/spatial_editor_plugin.cpp
+#, fuzzy
+msgid "Scale"
+msgstr "Val á kvarða"
+
+#: editor/plugins/spatial_editor_plugin.cpp
 msgid "Scaling: "
 msgstr ""
 
@@ -7783,11 +7809,6 @@ msgstr ""
 
 #: editor/plugins/texture_region_editor_plugin.cpp
 msgid "Snap Mode:"
-msgstr ""
-
-#: editor/plugins/texture_region_editor_plugin.cpp
-#: scene/resources/visual_shader.cpp
-msgid "None"
 msgstr ""
 
 #: editor/plugins/texture_region_editor_plugin.cpp
@@ -9806,7 +9827,7 @@ msgstr ""
 
 #: editor/project_settings_editor.cpp
 msgid ""
-"Invalid action name. it cannot be empty nor contain '/', ':', '=', '\\' or "
+"Invalid action name. It cannot be empty nor contain '/', ':', '=', '\\' or "
 "'\"'"
 msgstr ""
 
@@ -11198,6 +11219,11 @@ msgid "GridMap Paint"
 msgstr ""
 
 #: modules/gridmap/grid_map_editor_plugin.cpp
+#, fuzzy
+msgid "GridMap Selection"
+msgstr "Allt úrvalið"
+
+#: modules/gridmap/grid_map_editor_plugin.cpp
 msgid "Grid Map"
 msgstr ""
 
@@ -11444,6 +11470,16 @@ msgid "Add Output Port"
 msgstr "Fjarlægja val"
 
 #: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Change Port Type"
+msgstr "Anim breyting umskipti"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Change Port Name"
+msgstr "Anim breyting umskipti"
+
+#: modules/visual_script/visual_script_editor.cpp
 msgid "Override an existing built-in function."
 msgstr ""
 
@@ -11616,10 +11652,6 @@ msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Can't copy the function node."
-msgstr ""
-
-#: modules/visual_script/visual_script_editor.cpp
-msgid "Clipboard is empty!"
 msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
@@ -11830,7 +11862,19 @@ msgid ""
 msgstr ""
 
 #: platform/android/export/export.cpp
+msgid ""
+"Either Debug Keystore, Debug User AND Debug Password settings must be "
+"configured OR none of them."
+msgstr ""
+
+#: platform/android/export/export.cpp
 msgid "Debug keystore not configured in the Editor Settings nor in the preset."
+msgstr ""
+
+#: platform/android/export/export.cpp
+msgid ""
+"Either Release Keystore, Release User AND Release Password settings must be "
+"configured OR none of them."
 msgstr ""
 
 #: platform/android/export/export.cpp

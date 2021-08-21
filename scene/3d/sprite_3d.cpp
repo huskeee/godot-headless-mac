@@ -430,13 +430,14 @@ SpriteBase3D::SpriteBase3D() {
 	mesh_array[VS::ARRAY_COLOR] = mesh_colors;
 	mesh_array[VS::ARRAY_TEX_UV] = mesh_uvs;
 
-	VS::get_singleton()->mesh_add_surface_from_arrays(mesh, VS::PRIMITIVE_TRIANGLE_FAN, mesh_array, Array(), VS::ARRAY_COMPRESS_DEFAULT & ~VS::ARRAY_COMPRESS_TEX_UV);
+	VS::get_singleton()->mesh_add_surface_from_arrays(mesh, VS::PRIMITIVE_TRIANGLE_FAN, mesh_array, Array(), (VS::ARRAY_COMPRESS_DEFAULT & ~VS::ARRAY_COMPRESS_TEX_UV) & ~VS::ARRAY_COMPRESS_COLOR);
 	const int surface_vertex_len = VS::get_singleton()->mesh_surface_get_array_len(mesh, 0);
 	const int surface_index_len = VS::get_singleton()->mesh_surface_get_array_index_len(mesh, 0);
 
 	mesh_surface_format = VS::get_singleton()->mesh_surface_get_format(mesh, 0);
 	mesh_buffer = VS::get_singleton()->mesh_surface_get_array(mesh, 0);
 	mesh_stride = VS::get_singleton()->mesh_surface_make_offsets_from_format(mesh_surface_format, surface_vertex_len, surface_index_len, mesh_surface_offsets);
+	set_base(mesh);
 }
 
 SpriteBase3D::~SpriteBase3D() {
@@ -448,11 +449,13 @@ SpriteBase3D::~SpriteBase3D() {
 ///////////////////////////////////////////
 
 void Sprite3D::_draw() {
-
-	set_base(RID());
-
-	if (!texture.is_valid())
+	if (get_base() != get_mesh()) {
+		set_base(get_mesh());
+	}
+	if (!texture.is_valid()) {
+		set_base(RID());
 		return;
+	}
 	Vector2 tsize = texture->get_size();
 	if (tsize.x == 0 || tsize.y == 0)
 		return;
@@ -551,7 +554,7 @@ void Sprite3D::_draw() {
 
 	AABB aabb;
 
-	// Everything except position and UV is compressed
+	// Everything except position, color, and UV is compressed
 	PoolVector<uint8_t>::Write write_buffer = mesh_buffer.write();
 
 	int8_t v_normal[4] = {
@@ -566,13 +569,6 @@ void Sprite3D::_draw() {
 		(int8_t)CLAMP(tangent.normal.y * 127, -128, 127),
 		(int8_t)CLAMP(tangent.normal.z * 127, -128, 127),
 		(int8_t)CLAMP(tangent.d * 127, -128, 127)
-	};
-
-	uint8_t v_color[4] = {
-		(uint8_t)CLAMP(int(color.r * 255.0), 0, 255),
-		(uint8_t)CLAMP(int(color.g * 255.0), 0, 255),
-		(uint8_t)CLAMP(int(color.b * 255.0), 0, 255),
-		(uint8_t)CLAMP(int(color.a * 255.0), 0, 255)
 	};
 
 	for (int i = 0; i < 4; i++) {
@@ -593,7 +589,7 @@ void Sprite3D::_draw() {
 		copymem(&write_buffer[i * mesh_stride + mesh_surface_offsets[VS::ARRAY_VERTEX]], &v_vertex, sizeof(float) * 3);
 		copymem(&write_buffer[i * mesh_stride + mesh_surface_offsets[VS::ARRAY_NORMAL]], v_normal, 4);
 		copymem(&write_buffer[i * mesh_stride + mesh_surface_offsets[VS::ARRAY_TANGENT]], v_tangent, 4);
-		copymem(&write_buffer[i * mesh_stride + mesh_surface_offsets[VS::ARRAY_COLOR]], v_color, 4);
+		copymem(&write_buffer[i * mesh_stride + mesh_surface_offsets[VS::ARRAY_COLOR]], color.components, 4 * 4);
 	}
 
 	write_buffer.release();
@@ -603,8 +599,6 @@ void Sprite3D::_draw() {
 
 	VS::get_singleton()->mesh_set_custom_aabb(mesh, aabb);
 	set_aabb(aabb);
-
-	set_base(mesh);
 
 	RID mat = SpatialMaterial::get_material_rid_for_2d(get_draw_flag(FLAG_SHADED), get_draw_flag(FLAG_TRANSPARENT), get_draw_flag(FLAG_DOUBLE_SIDED), get_alpha_cut_mode() == ALPHA_CUT_DISCARD, get_alpha_cut_mode() == ALPHA_CUT_OPAQUE_PREPASS, get_billboard_mode() == SpatialMaterial::BILLBOARD_ENABLED, get_billboard_mode() == SpatialMaterial::BILLBOARD_FIXED_Y);
 	VS::get_singleton()->material_set_shader(get_material(), VS::get_singleton()->material_get_shader(mat));
@@ -802,8 +796,9 @@ Sprite3D::Sprite3D() {
 ////////////////////////////////////////
 
 void AnimatedSprite3D::_draw() {
-
-	set_base(RID());
+	if (get_base() != get_mesh()) {
+		set_base(get_mesh());
+	}
 
 	if (frames.is_null()) {
 		return;
@@ -818,8 +813,10 @@ void AnimatedSprite3D::_draw() {
 	}
 
 	Ref<Texture> texture = frames->get_frame(animation, frame);
-	if (!texture.is_valid())
+	if (!texture.is_valid()) {
+		set_base(RID());
 		return; //no texuture no life
+	}
 	Vector2 tsize = texture->get_size();
 	if (tsize.x == 0 || tsize.y == 0)
 		return;
@@ -913,7 +910,7 @@ void AnimatedSprite3D::_draw() {
 
 	AABB aabb;
 
-	// Everything except position and UV is compressed
+	// Everything except position, color, and UV is compressed
 	PoolVector<uint8_t>::Write write_buffer = mesh_buffer.write();
 
 	int8_t v_normal[4] = {
@@ -928,13 +925,6 @@ void AnimatedSprite3D::_draw() {
 		(int8_t)CLAMP(tangent.normal.y * 127, -128, 127),
 		(int8_t)CLAMP(tangent.normal.z * 127, -128, 127),
 		(int8_t)CLAMP(tangent.d * 127, -128, 127)
-	};
-
-	uint8_t v_color[4] = {
-		(uint8_t)CLAMP(int(color.r * 255.0), 0, 255),
-		(uint8_t)CLAMP(int(color.g * 255.0), 0, 255),
-		(uint8_t)CLAMP(int(color.b * 255.0), 0, 255),
-		(uint8_t)CLAMP(int(color.a * 255.0), 0, 255)
 	};
 
 	for (int i = 0; i < 4; i++) {
@@ -955,7 +945,7 @@ void AnimatedSprite3D::_draw() {
 		copymem(&write_buffer[i * mesh_stride + mesh_surface_offsets[VS::ARRAY_VERTEX]], &v_vertex, sizeof(float) * 3);
 		copymem(&write_buffer[i * mesh_stride + mesh_surface_offsets[VS::ARRAY_NORMAL]], v_normal, 4);
 		copymem(&write_buffer[i * mesh_stride + mesh_surface_offsets[VS::ARRAY_TANGENT]], v_tangent, 4);
-		copymem(&write_buffer[i * mesh_stride + mesh_surface_offsets[VS::ARRAY_COLOR]], v_color, 4);
+		copymem(&write_buffer[i * mesh_stride + mesh_surface_offsets[VS::ARRAY_COLOR]], color.components, 4 * 4);
 	}
 
 	write_buffer.release();
@@ -965,8 +955,6 @@ void AnimatedSprite3D::_draw() {
 
 	VS::get_singleton()->mesh_set_custom_aabb(mesh, aabb);
 	set_aabb(aabb);
-
-	set_base(mesh);
 
 	RID mat = SpatialMaterial::get_material_rid_for_2d(get_draw_flag(FLAG_SHADED), get_draw_flag(FLAG_TRANSPARENT), get_draw_flag(FLAG_DOUBLE_SIDED), get_alpha_cut_mode() == ALPHA_CUT_DISCARD, get_alpha_cut_mode() == ALPHA_CUT_OPAQUE_PREPASS, get_billboard_mode() == SpatialMaterial::BILLBOARD_ENABLED, get_billboard_mode() == SpatialMaterial::BILLBOARD_FIXED_Y);
 	VS::get_singleton()->material_set_shader(get_material(), VS::get_singleton()->material_get_shader(mat));

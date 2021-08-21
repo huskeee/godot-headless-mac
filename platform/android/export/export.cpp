@@ -31,6 +31,7 @@
 #include "export.h"
 
 #include "core/io/image_loader.h"
+#include "core/io/json.h"
 #include "core/io/marshalls.h"
 #include "core/io/zip_io.h"
 #include "core/os/dir_access.h"
@@ -206,6 +207,7 @@ static const char *LEGACY_BUILD_SPLASH_IMAGE_EXPORT_PATH = "res/drawable-nodpi-v
 static const char *SPLASH_BG_COLOR_PATH = "res/drawable-nodpi/splash_bg_color.png";
 static const char *LEGACY_BUILD_SPLASH_BG_COLOR_PATH = "res/drawable-nodpi-v4/splash_bg_color.png";
 static const char *SPLASH_CONFIG_PATH = "res://android/build/res/drawable/splash_drawable.xml";
+static const char *GDNATIVE_LIBS_PATH = "res://android/build/libs/gdnativelibs.json";
 
 const String SPLASH_CONFIG_XML_CONTENT = R"SPLASH(<?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
@@ -278,6 +280,11 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 
 		zipFile apk;
 		EditorProgress *ep;
+	};
+
+	struct CustomExportData {
+		bool debug;
+		Vector<String> libs;
 	};
 
 	Vector<PluginConfigAndroid> plugins;
@@ -768,6 +775,33 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 		return OK;
 	}
 
+	static Error copy_gradle_so(void *p_userdata, const SharedObject &p_so) {
+		ERR_FAIL_COND_V_MSG(!p_so.path.get_file().begins_with("lib"), FAILED,
+				"Android .so file names must start with \"lib\", but got: " + p_so.path);
+		Vector<String> abis = get_abis();
+		CustomExportData *export_data = (CustomExportData *)p_userdata;
+		bool exported = false;
+		for (int i = 0; i < p_so.tags.size(); ++i) {
+			int abi_index = abis.find(p_so.tags[i]);
+			if (abi_index != -1) {
+				exported = true;
+				String base = "res://android/build/libs";
+				String type = export_data->debug ? "debug" : "release";
+				String abi = abis[abi_index];
+				String filename = p_so.path.get_file();
+				String dst_path = base.plus_file(type).plus_file(abi).plus_file(filename);
+				Vector<uint8_t> data = FileAccess::get_file_as_array(p_so.path);
+				print_verbose("Copying .so file from " + p_so.path + " to " + dst_path);
+				Error err = store_file_at_path(dst_path, data);
+				ERR_FAIL_COND_V_MSG(err, err, "Failed to copy .so file from " + p_so.path + " to " + dst_path);
+				export_data->libs.push_back(dst_path);
+			}
+		}
+		ERR_FAIL_COND_V_MSG(!exported, FAILED,
+				"Cannot determine ABI for library \"" + p_so.path + "\". One of the supported ABIs must be used as a tag: " + String(" ").join(abis));
+		return OK;
+	}
+
 	bool _has_storage_permission(const Vector<String> &p_permissions) {
 		return p_permissions.find("android.permission.READ_EXTERNAL_STORAGE") != -1 || p_permissions.find("android.permission.WRITE_EXTERNAL_STORAGE") != -1;
 	}
@@ -818,7 +852,12 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 		Vector<String> perms;
 		_get_permissions(p_preset, p_give_internet, perms);
 		for (int i = 0; i < perms.size(); i++) {
-			manifest_text += vformat("    <uses-permission android:name=\"%s\" />\n", perms.get(i));
+			String permission = perms.get(i);
+			if (permission == "android.permission.WRITE_EXTERNAL_STORAGE" || permission == "android.permission.READ_EXTERNAL_STORAGE") {
+				manifest_text += vformat("    <uses-permission android:name=\"%s\" android:maxSdkVersion=\"29\" />\n", permission);
+			} else {
+				manifest_text += vformat("    <uses-permission android:name=\"%s\" />\n", permission);
+			}
 		}
 
 		manifest_text += _get_xr_features_tag(p_preset);
@@ -862,7 +901,8 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 		int version_code = p_preset->get("version/code");
 		String package_name = p_preset->get("package/unique_name");
 
-		const int screen_orientation = _get_android_orientation_value(_get_screen_orientation());
+		const int screen_orientation = _get_android_orientation_value(
+				OS::get_singleton()->get_screen_orientation_from_string(GLOBAL_GET("display/window/handheld/orientation")));
 
 		bool min_gles3 = ProjectSettings::get_singleton()->get("rendering/quality/driver/driver_name") == "GLES3" &&
 						 !ProjectSettings::get_singleton()->get("rendering/quality/driver/fallback_to_gles2");
@@ -974,7 +1014,6 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 						}
 
 						if (tname == "application" && attrname == "requestLegacyExternalStorage") {
-
 							encode_uint32(has_storage_permission ? 0xFFFFFFFF : 0, &p_manifest.write[iofs + 16]);
 						}
 
@@ -1012,8 +1051,6 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 							encode_uint32(min_gles3 ? 0x00030000 : 0x00020000, &p_manifest.write[iofs + 16]);
 						}
 
-						// FIXME: `attr_value != 0xFFFFFFFF` below added as a stopgap measure for GH-32553,
-						// but the issue should be debugged further and properly addressed.
 						if (tname == "meta-data" && attrname == "name" && value == "xr_mode_metadata_name") {
 							// Update the meta-data 'android:name' attribute based on the selected XR mode.
 							if (xr_mode_index == 1 /* XRMode.OVR */) {
@@ -1936,7 +1973,7 @@ public:
 		err = OS::get_singleton()->execute(adb, args, true, NULL, &output, &rv, true);
 		print_verbose(output);
 		if (err || rv != 0) {
-			EditorNode::add_io_error("Could not install to device.");
+			EditorNode::add_io_error("Could not install to device: " + output);
 			CLEANUP_AND_RETURN(ERR_CANT_CREATE);
 		}
 
@@ -2122,6 +2159,8 @@ public:
 			if (!installed_android_build_template) {
 
 				err += TTR("Android build template not installed in the project. Install it from the Project menu.") + "\n";
+			} else {
+				r_missing_templates = false;
 			}
 
 			valid = installed_android_build_template && !r_missing_templates;
@@ -2130,6 +2169,13 @@ public:
 		// Validate the rest of the configuration.
 
 		String dk = p_preset->get("keystore/debug");
+		String dk_user = p_preset->get("keystore/debug_user");
+		String dk_password = p_preset->get("keystore/debug_password");
+
+		if ((dk.empty() || dk_user.empty() || dk_password.empty()) && (!dk.empty() || !dk_user.empty() || !dk_password.empty())) {
+			valid = false;
+			err += TTR("Either Debug Keystore, Debug User AND Debug Password settings must be configured OR none of them.") + "\n";
+		}
 
 		if (!FileAccess::exists(dk)) {
 
@@ -2141,6 +2187,13 @@ public:
 		}
 
 		String rk = p_preset->get("keystore/release");
+		String rk_user = p_preset->get("keystore/release_user");
+		String rk_password = p_preset->get("keystore/release_password");
+
+		if ((rk.empty() || rk_user.empty() || rk_password.empty()) && (!rk.empty() || !rk_user.empty() || !rk_password.empty())) {
+			valid = false;
+			err += TTR("Either Release Keystore, Release User AND Release Password settings must be configured OR none of them.") + "\n";
+		}
 
 		if (!rk.empty() && !FileAccess::exists(rk)) {
 			valid = false;
@@ -2774,6 +2827,30 @@ public:
 		}
 	}
 
+	void _remove_copied_libs() {
+		print_verbose("Removing previously installed libraries...");
+		Error error;
+		String libs_json = FileAccess::get_file_as_string(GDNATIVE_LIBS_PATH, &error);
+		if (error || libs_json.empty()) {
+			print_verbose("No previously installed libraries found");
+			return;
+		}
+
+		Variant result;
+		String error_string;
+		int error_line;
+		error = JSON::parse(libs_json, result, error_string, error_line);
+		ERR_FAIL_COND_MSG(error, "Error parsing \"" + libs_json + "\" on line " + itos(error_line) + ": " + error_string);
+
+		Vector<String> libs = result;
+		DirAccessRef da = DirAccess::create(DirAccess::ACCESS_RESOURCES);
+		for (int i = 0; i < libs.size(); i++) {
+			print_verbose("Removing previously installed library " + libs[i]);
+			da->remove(libs[i]);
+		}
+		da->remove(GDNATIVE_LIBS_PATH);
+	}
+
 	String join_list(List<String> parts, const String &separator) const {
 		String ret;
 		for (int i = 0; i < parts.size(); ++i) {
@@ -2886,12 +2963,20 @@ public:
 			_update_custom_build_project();
 			//stores all the project files inside the Gradle project directory. Also includes all ABIs
 			_clear_assets_directory();
+			_remove_copied_libs();
 			if (!apk_expansion) {
 				print_verbose("Exporting project files..");
-				err = export_project_files(p_preset, rename_and_store_file_in_gradle_project, NULL, ignore_so_file);
+				CustomExportData user_data;
+				user_data.debug = p_debug;
+				err = export_project_files(p_preset, rename_and_store_file_in_gradle_project, &user_data, copy_gradle_so);
 				if (err != OK) {
 					EditorNode::add_io_error("Could not export project files to gradle project\n");
 					return err;
+				}
+				if (user_data.libs.size() > 0) {
+					FileAccessRef fa = FileAccess::open(GDNATIVE_LIBS_PATH, FileAccess::WRITE);
+					fa->store_string(JSON::print(user_data.libs, "\t"));
+					fa->close();
 				}
 			} else {
 				print_verbose("Saving apk expansion file..");
@@ -2963,19 +3048,35 @@ public:
 			// Sensitive additions must be done below the logging statement.
 			print_verbose("Build Android project using gradle command: " + String("\n") + build_command + " " + join_list(cmdline, String(" ")));
 
-			if (should_sign && !p_debug) {
-				// Pass the release keystore info as well
-				String release_keystore = p_preset->get("keystore/release");
-				String release_username = p_preset->get("keystore/release_user");
-				String release_password = p_preset->get("keystore/release_password");
-				if (!FileAccess::exists(release_keystore)) {
-					EditorNode::add_io_error("Could not find keystore, unable to export.");
-					return ERR_FILE_CANT_OPEN;
-				}
+			if (should_sign) {
+				if (p_debug) {
+					String debug_keystore = p_preset->get("keystore/debug");
+					String debug_password = p_preset->get("keystore/debug_password");
+					String debug_user = p_preset->get("keystore/debug_user");
 
-				cmdline.push_back("-Prelease_keystore_file=" + release_keystore); // argument to specify the release keystore file.
-				cmdline.push_back("-Prelease_keystore_alias=" + release_username); // argument to specify the release keystore alias.
-				cmdline.push_back("-Prelease_keystore_password=" + release_password); // argument to specity the release keystore password.
+					if (debug_keystore.empty()) {
+						debug_keystore = EditorSettings::get_singleton()->get("export/android/debug_keystore");
+						debug_password = EditorSettings::get_singleton()->get("export/android/debug_keystore_pass");
+						debug_user = EditorSettings::get_singleton()->get("export/android/debug_keystore_user");
+					}
+
+					cmdline.push_back("-Pdebug_keystore_file=" + debug_keystore); // argument to specify the debug keystore file.
+					cmdline.push_back("-Pdebug_keystore_alias=" + debug_user); // argument to specify the debug keystore alias.
+					cmdline.push_back("-Pdebug_keystore_password=" + debug_password); // argument to specify the debug keystore password.
+				} else {
+					// Pass the release keystore info as well
+					String release_keystore = p_preset->get("keystore/release");
+					String release_username = p_preset->get("keystore/release_user");
+					String release_password = p_preset->get("keystore/release_password");
+					if (!FileAccess::exists(release_keystore)) {
+						EditorNode::add_io_error("Could not find keystore, unable to export.");
+						return ERR_FILE_CANT_OPEN;
+					}
+
+					cmdline.push_back("-Prelease_keystore_file=" + release_keystore); // argument to specify the release keystore file.
+					cmdline.push_back("-Prelease_keystore_alias=" + release_username); // argument to specify the release keystore alias.
+					cmdline.push_back("-Prelease_keystore_password=" + release_password); // argument to specify the release keystore password.
+				}
 			}
 
 			int result = EditorNode::get_singleton()->execute_and_show_output(TTR("Building Android Project (gradle)"), build_command, cmdline);

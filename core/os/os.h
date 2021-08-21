@@ -453,7 +453,7 @@ public:
 		SYSTEM_DIR_RINGTONES,
 	};
 
-	virtual String get_system_dir(SystemDir p_dir) const;
+	virtual String get_system_dir(SystemDir p_dir, bool p_shared_storage = true) const;
 
 	virtual Error move_to_trash(const String &p_path) { return FAILED; }
 
@@ -475,6 +475,7 @@ public:
 
 	virtual void set_screen_orientation(ScreenOrientation p_orientation);
 	virtual ScreenOrientation get_screen_orientation() const;
+	ScreenOrientation get_screen_orientation_from_string(const String &p_orientation) const;
 
 	virtual void enable_for_stealing_focus(ProcessID pid) {}
 	virtual void move_window_to_foreground() {}
