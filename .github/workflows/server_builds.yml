@@ -13,6 +13,12 @@ jobs:
       
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Get latest stable Godot source code
+        run: wget https://github.com/godotengine/godot/releases/download/${{ env.VERSION }}/godot-${{ env.VERSION }}.tar.xz
+
+      - name: Extract Godot source code
+        run: tar xvf godot-${{ env.VERSION }}.tar.xz --strip-components=1
         
       - name: Install scons and yasm
         run: brew install scons yasm
@@ -26,13 +32,4 @@ jobs:
           mv ./bin/godot_server.osx.tools.64 ./bin/godot
           zip ./bin/godot.zip ./bin/godot
       
-      - name: Upload binaries to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./bin/godot.zip
-          asset_name: Godot_v${{ env.VERSION }}_mac_headless.64.zip
-          tag: ${{ env.VERSION }}
-          overwrite: true
-          body: "Headless build of Godot ${{ env.VERSION }} for macOS.
-See details about the release [here](https://github.com/godotengine/godot/releases/tag/${{ env.VERSION }})."
+      
