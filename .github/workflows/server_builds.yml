@@ -1,5 +1,5 @@
 name: ☁ Headless Builds
-on: [push, pull_request]
+on: [push]
 
 env:
   VERSION: 3.4.3-stable
