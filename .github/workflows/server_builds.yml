@@ -2,7 +2,7 @@ name: ☁ Headless Builds
 on: [push]
 
 env:
-  VERSION: 4.0-stable
+  VERSION: 3.5.2-stable
 
 jobs:
   mac-editor:
