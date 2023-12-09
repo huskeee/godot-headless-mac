@@ -28,7 +28,7 @@ jobs:
 
       - name: Compile
         run: |
-          scons platform=server tools=yes use_static_cpp=no -j 8
+          scons platform=macos tools=yes use_static_cpp=no -j 8
           mv ./bin/godot_server.osx.tools.64 ./bin/godot
           zip ./bin/godot.zip ./bin/godot
       - name: Upload binaries to release
