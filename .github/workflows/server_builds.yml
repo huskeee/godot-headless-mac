@@ -21,7 +21,7 @@ jobs:
           hdiutil attach vulkansdk-macos-${{ env.VULKAN_VERSION }}.dmg
           cd /Volumes/vulkansdk-macos-${{ env.VULKAN_VERSION }}
           ls -la
-          sudo ./InstallVulkan.app/Contents/MacOS/InstallVulkan --root ~/VulkanSDK/${{ env.VULKAN_VERSION }}--accept-licenses --default-answer --confirm-command install 
+          sudo ./InstallVulkan.app/Contents/MacOS/InstallVulkan --root ~/VulkanSDK/${{ env.VULKAN_VERSION }} --accept-licenses --default-answer --confirm-command install 
 
       - name: Get latest stable Godot source code
         run: wget https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}/godot-${{ env.GODOT_VERSION }}.tar.xz
