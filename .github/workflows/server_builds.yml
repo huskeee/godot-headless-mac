@@ -2,7 +2,7 @@ name: ☁ Headless Builds
 on: [push]
 
 env:
-  GODOT_VERSION: 4.2-stable
+  GODOT_VERSION: 4.2.1-stable
   VULKAN_VERSION: 1.3.268.1
 
 jobs:
