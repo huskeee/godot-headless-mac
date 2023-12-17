@@ -37,7 +37,7 @@ jobs:
 
       - name: Compile
         run: |
-          scons platform=macos tools=yes use_static_cpp=no -j 8
+          scons platform=macos target=editor arch=x86_64 use_static_cpp=no -j 8
           mv ./bin/godot.macos.editor.x86_64 ./bin/godot
           zip ./bin/godot.zip ./bin/godot
       - name: Upload binaries to release
